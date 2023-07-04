@@ -40,13 +40,20 @@ def index_view(request):
 def create_event(request):
     if request.method == 'POST':
         # Extract the event data from the form
-        person = Person.objects.get(f_name = request.POST.get('person'))
+        person = None
+        try:
+            person = Person.objects.get(f_name = request.POST.get('person'))
+        except Person.DoesNotExist:
+            return redirect(reverse('scheduler:index'))
         type = request.POST.get('options-outlined')
 
         date = request.POST.get('date')
         if type == "PRF":
-            time = request.POST.get('time')
-            date = date + " " + time
+            try:
+                time = request.POST.get('time')
+                date = date + " " + time
+            except:
+                return redirect(reverse('scheduler:index'))
 
         event = Event.objects.create(person=person, type=type, date_time=date)
         # print(event)
@@ -70,3 +77,8 @@ def delete_event(request):
         # return render(request, 'scheduler/index.html')
         return redirect(reverse('scheduler:index'))
         # return HttpResponse("YUP")
+
+
+
+def redirect_index(request):
+    return redirect(reverse('scheduler:index'))
