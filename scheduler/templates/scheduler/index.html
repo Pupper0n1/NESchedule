@@ -2,125 +2,198 @@
 
 {% block content %}
 
-<div id='calendar'></div>
+{% comment %} <meta name="viewport" content="width=device-width, initial-scale=1.0"> {% endcomment %}
 
+<div class="container">
+  <div class="row">
+    <div class="col">
 
-<!-- Bootstrap Create Modal -->
-<div class="modal fade" id="create_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
+      <div id='calendar'></div>
+
+      <!-- Bootstrap Create Modal -->
+      <div class="modal fade" id="create_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title" id="myModalLabel">Add an Event</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              <h4 class="modal-title" id="myModalLabel">Add an Event</h4>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="{% url 'scheduler:create_event' %}" method="POST" id="event-form">
-                    {% csrf_token %}
-                    <div class="input-group mb-3">
-                        <select required name="person"class="form-select" id="inputGroupSelect03" aria-label="Example select with button addon">
-                            <option selected>Choose Who...</option>
-                            {% for person in people %}
-                            <option value="{{person.f_name}}">{{person.f_name}}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+              <form action="{% url 'scheduler:create_event' %}" method="POST" id="event-form">
+                {% csrf_token %}
+                <div class="input-group mb-3">
+                  <select required name="person" class="form-select form-control" id="inputGroupSelect03" aria-label="Example select with button addon">
+                    <option selected>Choose Who...</option>
+                    {% for person in people %}
+                    <option value="{{person.f_name}}">{{person.f_name}}</option>
+                    {% endfor %}
+                  </select>
+                </div>
 
-                    <div class="form-check form-check-inline">
-                        <input type="radio" class="btn-check" name="options-outlined" id="rto-outlined" autocomplete="off" value="RTO" checked>
-                        <label class="btn btn-outline-warning" for="rto-outlined">RTO</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input type="radio" class="btn-check" name="options-outlined" id="success-outlined" autocomplete="off" value="PRF">
-                        <label class="btn btn-outline-success" for="success-outlined">Preference</label>
-                    </div>
-                    
+                <div class="form-check form-check-inline">
+                  <input type="radio" class="btn-check" name="options-outlined" id="rto-outlined" autocomplete="off" value="RTO" checked>
+                  <label class="btn btn-outline-warning" for="rto-outlined">RTO</label>
+                </div>
+                  <input type="radio" class="btn-check" name="options-outlined" id="success-outlined" autocomplete="off" value="PRF">
+                  <label class="btn btn-outline-success" for="success-outlined">Preference</label>
+                </div>
 
-                    <div id="preference-input" style="display: none;" >
-                        <input name='time' type="time" class="form-control" placeholder="Enter preference" name="preference" style="margin-top:10px; text-align:center">
-                    </div>
+                <div id="preference-input" style="display: none;">
+                  <input name='time' type="time" class="form-control" placeholder="Enter preference" name="preference" style="margin-top:10px; text-align:center">
+                </div>
 
-                        <input type="hidden" name="date" id="start-date-input">
-                        <div class="modal-footer d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          
-                        <button type="Submit" class="btn btn-success" data-bs-dismiss="modal">Submit</button>
-                      </div>
-                </form>
+                <input type="hidden" name="date" id="start-date-input">
+                <input type="hidden" name="date_end" id="end-date-input">
+                <div class="modal-footer d-flex justify-content-between">
+                  <button type="button" class="btn btn-secondary d-block" data-bs-dismiss="modal">Close</button>
+                  <button type="Submit" class="btn btn-success d-block" data-bs-dismiss="modal">Submit</button>
+                </div>
+              </form>
             </div>
 
+          </div>
         </div>
-    </div>
-</div>
+      </div>
 
-<!-- Bootstrap Delete Modal -->
-<div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
+      <!-- Bootstrap Delete Modal -->
+      <div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title" id="myModalLabel">Delete an Event</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              <h4 class="modal-title" id="myModalLabel">Delete an Event</h4>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="{% url 'scheduler:delete_event' %}" method="POST" id="event-form">
-                    {% csrf_token %}
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <input type="hidden" name="event_id" id="event-id">
-                        <button type="Submit" class="btn btn-success" data-bs-dismiss="modal">Delete</button>
-                      </div>
+              <form action="{% url 'scheduler:set_event_status' %}" method="POST" id="event-form">
+                {% csrf_token %}
+                <input type="hidden" name="event_id" id="event-id">
+                {% if user.is_superuser %}
+                <p>Approve or Reject this event</p>
+                <div class="d-flex justify-content-around">
+                <button type="submit" class="btn btn-success d-block" name="status" value="A" data-bs-dismiss="modal">Approve</button>
+                <button type="submit" class="btn btn-warning d-block" name="status" value="R" data-bs-dismiss="modal">Reject</button>
+                {% else %}
+                <p>Are you sure you want to delete this request?</p>
+                <div class="d-flex justify-content-around">
+                {% endif %}
+                  <button type="submit" class="btn btn-danger d-block" data-bs-dismiss="modal" name="status" value="D">Delete</button>
+                  <button type="button" class="btn btn-secondary d-block" data-bs-dismiss="modal">Close</button>
+                </div>
+
                 </form>
             </div>
-
+          </div>
         </div>
+      </div>
+
     </div>
+  </div>
 </div>
 
 <script>
-    const rtoRadio = document.getElementById("rto-outlined");
-    const preferenceRadio = document.getElementById("success-outlined");
-    const preferenceInput = document.getElementById("preference-input");
+  const rtoRadio = document.getElementById("rto-outlined");
+  const preferenceRadio = document.getElementById("success-outlined");
+  const preferenceInput = document.getElementById("preference-input");
 
-    rtoRadio.addEventListener("click", () => {
-        preferenceInput.style.display = "none";
+
+  function isDateInRange(targetDate, startDate, endDate) {
+    var targetTime = targetDate.getTime();
+    var startTime = startDate.getTime();
+    var endTime = endDate.getTime();
+  
+    return targetTime >= startTime && targetTime <= endTime;
+  }
+
+
+  console.log({{events|safe}})
+  rtoRadio.addEventListener("click", () => {
+    preferenceInput.style.display = "none";
+  });
+
+  preferenceRadio.addEventListener("click", () => {
+    preferenceInput.style.display = "block";
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      events: {{events|safe}},
+      themeSystem: 'bootstrap5',
+      selectable: true,
+      longPressDelay: 1000,
+      eventClick: function(info) {
+        // Retrieve the event ID
+        var eventId = info.event.id;
+        console.log(eventId);
+
+        // Show the delete modal when an event is clicked
+        var deleteModal = new bootstrap.Modal(document.getElementById('delete_modal'));
+        document.getElementById('event-id').value = eventId;
+        deleteModal.show();
+      },
+      select: function(info) {
+        // Create and display the create modal
+        var startDate = info.startStr;
+        var endDate = info.endStr;
+        console.log(startDate);
+        console.log(Date(startDate));
+        let counter = 0;
+
+
+        var createModal = new bootstrap.Modal(document.getElementById('create_modal'));
+        createModal.show();
+
+        // Store the selected date range in hidden input field
+
+        document.getElementById('start-date-input').value = startDate;
+        document.getElementById('end-date-input').value = endDate;
+        console.log('Selected range: ' + startDate + ' - ' + endDate);
+      }
     });
-
-    preferenceRadio.addEventListener("click", () => {
-        preferenceInput.style.display = "block";
-    });
-
-
-
-
-    document.addEventListener('DOMContentLoaded', function() {
-        var calendarEl = document.getElementById('calendar');
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            events: {{events|safe}},
-            themeSystem: 'bootstrap5',
-            selectable: true,
-            eventClick: function(info) {
-                // Retrieve the event ID
-                var eventId = info.event.id;
-                console.log(eventId)
-
-                // Show the delete modal when an event is clicked
-                var deleteModal = new bootstrap.Modal(document.getElementById('delete_modal'));
-                document.getElementById('event-id').value = eventId;
-                deleteModal.show();
-            },
-            select: function(info) {
-                // Create and display the create modal
-                var createModal = new bootstrap.Modal(document.getElementById('create_modal'));
-                createModal.show();
-
-                // Store the selected date range in hidden input field
-                var startDate = info.startStr;
-                var endDate = info.endStr;
-                document.getElementById('start-date-input').value = startDate;
-
-                console.log('Selected range: ' + startDate + ' - ' + endDate);
-            }
-        });
-        calendar.render();
-    });
+    calendar.render();  
+  });
 </script>
 
 {% endblock content %}
+
+<style>
+  #body {
+    background-color: gray;
+  }
+
+  #title-bar {
+    background-color: black;
+  }
+
+  #title {
+    color: white;
+  }
+
+  #N {
+    position: relative;
+    left: 10px;
+  }
+
+  body {
+    margin: 40px 10px;
+    padding: 0;
+    font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
+    font-size: 14px;
+  }
+
+  #calendar {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .test {
+    background-color: green;
+  }
+
+  /* Custom CSS for mobile devices */
+  @media (max-width: 576px) {
+    .modal-content {
+      width: 90%;
+    }
+  }
+</style>
