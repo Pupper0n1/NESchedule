@@ -14,12 +14,13 @@ class Event(models.Model):
     ]
     person = models.ForeignKey('Person', on_delete=models.CASCADE)
     type = models.CharField(max_length=3, choices=EVENT_CHOICES)
-    date_time = models.DateTimeField(null=True, blank=True)
+    date_start = models.DateField(null=True, blank=True)
     date_end = models.DateField(null=True, blank=True)
+    time = models.TimeField(null=True, blank=True)
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default="Pending")
 
     def __str__(self):
-        return f"{self.person.f_name} {self.person.l_name} is requesting {self.type} on {self.date_time}"
+        return f"{self.person.f_name} {self.person.l_name} is requesting {self.type} on {self.date_start} at {self.time}"
 
 
 
