@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Email</title>
+    
+    <style>
+        body{
+            background-color: #D9E3F1;
+            padding: 10px 50px 10px 50px;
+        }
+        h1{
+            text-align: center;
+            color: #485785;
+        }
+
+        
+        .full-button {
+            width:80%;
+            margin: 10px 50px 30px 50px;
+        }
+
+        .half-button {
+            width:25%;
+        }
+
+        .container{
+            background-color: #FFFFFF;
+            border-radius: 25px;
+            padding: 10px 50px 10px 50px;
+            border: #4984e3 solid 5px;
+        }
+
+
+        .button {
+            display: block;
+            width:30%;
+            height: 25px;
+            background: #6FAAF8;
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            line-height: 25px;
+            margin:15px 10% 15px 10%;
+            text-decoration:none;
+        }
+
+        #primary {
+            width:80%
+        }
+
+        .center {
+            display:flex;
+        }
+
+        #accept {
+            background-color: #4CAF50;
+        }
+
+        #reject {
+            background-color: #f44336;
+        }
+        
+        .center-text {
+            text-align:center;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <h1> REQUEST</h1>
+
+        <h4 class="center-text">{{person}} is requesting {{event_type}} on:</h4>
+
+        {% if event_type == "RTO" %}
+        <h4 class="center-text">{{date}}</h4>
+        {% else %}
+        <h4 class="center-text">{{date}} at {{time}}</h4>
+        {% endif %}
+        
+        <div class="center">
+            <a href="http://pupper1n0.pythonanywhere.com/schedule" class="button" id="primary">See Schedule</a>
+        </div>
+    
+        <p>If you would like to quick accept or reject the request, please click the buttons below.</p>
+        <div class="center"> 
+            <a href="http://pupper1n0.pythonanywhere.com/quick-approve/{{event_id}}" class="button" style="margin-left:10%" id="approve">Approve</a>
+            <a href="http://pupper1n0.pythonanywhere.com/quick-reject/{{event_id}}" class="button" style="margin-right:10%" id="reject">Reject</a>
+        </div>
+    </div>
+
+
+</body>
+</html>

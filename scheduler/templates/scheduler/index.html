@@ -2,12 +2,7 @@
 {% block content %}
 {% load static %}
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<div class="container">
-  <div class="row">
-
-    </div>
     <div class="col">
       
 
@@ -15,7 +10,7 @@
 
       <!-- Bootstrap Create Modal -->
       <div class="modal fade" id="create_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-dialog-centered" id="custom-size" role="document" style="max-width:50%">
           <div class="modal-content">
             <div class="modal-header">
               <h4 class="modal-title" id="myModalLabel">Add an Event</h4>
@@ -61,8 +56,8 @@
       </div>
 
       <!-- Bootstrap Delete Modal -->
-      <div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" id="full_width">
+        <div class="modal-dialog modal-dialog-centered" role="document" id="full_width">
           <div class="modal-content">
             <div class="modal-header">
               <h4 class="modal-title" id="myModalLabel">Delete an Event</h4>
@@ -90,10 +85,8 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
-</div>
 
 
 
@@ -129,18 +122,30 @@
         login_button: {
           text: 'Admin Login',
           click: function() {
-            window.location.href = "youtube.com";
+            window.location.href = '{% url 'scheduler:login_view' %}';
           }
-        }
+        },
+        logout_button: {
+          text: 'Logout',
+          click: function() {
+            window.location.href = '{% url 'scheduler:logout_view' %}';
+          }
+        },
       },
       events: {{events|safe}},
       themeSystem: 'bootstrap5',
       headerToolbar: {
+
+        {% if user.is_authenticated %}
+        left: 'logout_button',
+        {% else %}
         left: 'login_button',
+        {% endif %}
+
         center: 'title',
         right: 'today prev,next'},
       selectable: true,
-      longPressDelay: 1000,
+      longPressDelay: 300,
       eventClick: function(info) {
         // Retrieve the event ID
         var eventId = info.event.id;

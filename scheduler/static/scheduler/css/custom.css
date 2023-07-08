@@ -181,10 +181,6 @@ margin: 0 auto;
     font-size: 14px;
   }
 
-  #calendar {
-    max-width: 1100px;
-    margin: 0 auto;
-  }
 
   .test {
     background-color: green;
@@ -192,9 +188,12 @@ margin: 0 auto;
 
   /* Custom CSS for mobile devices */
   @media (max-width: 576px) {
-    .modal-content {
-      width: 90%;
+    #fullwidth {
+      max-width: 90%;
+      width:90%;
     }
+
+
   }
 
 

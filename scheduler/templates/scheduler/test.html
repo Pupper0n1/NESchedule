@@ -1,4 +1,4 @@
-{% load static %}
+
 <!DOCTYPE html>
 <html lang='en'>
   <head>
@@ -22,10 +22,34 @@
   <body>
 
     <!-- Image and text -->
-{% comment %} <nav class="navbar" id="title-bar">
-    <h3 id="title">NESchedule Market Mall</h3>
-  </nav> {% endcomment %}
-    {% block content %}{% endblock content %}
+
+    
+<link rel="stylesheet" href="../static/scheduler/css/login.css">
+
+<div class="wrapper">
+    <div class="logo">
+        <img src="../static/scheduler/img/N.jpg" alt="">
+    </div>
+    <div class="text-center mt-4 name">
+        NESchedule
+    </div>
+    <form action="/schedule/" method="POST" class="p-3 mt-3">
+        <input type="hidden" name="csrfmiddlewaretoken" value="HxRpNsR6mk5NLgd473ETeaj50Ru5p4ixCza1hOk1A9bTEv4OnUZrNcoHv2pliHkY">
+        <div class="form-field d-flex align-items-center">
+            <span class="far fa-user"></span>
+            <input type="text" name="username" id="username" placeholder="Username">
+        </div>
+        <div class="form-field d-flex align-items-center">
+            <span class="fas fa-key"></span>
+            <input type="password" name="password" id="pwd" placeholder="Password">
+        </div>
+        <button class="btn btn-secondary login_button">Login</button>
+    </form>
+    <div class="text-center fs-6">
+        <a href="/reset-password/">Forget password?</a>
+    </div>
+</div>
+
 
 
 

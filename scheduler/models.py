@@ -4,7 +4,8 @@ from django.db import models
 class Event(models.Model):
     EVENT_CHOICES = [
         ("RTO", "Requested Time Off"),
-        ("PRF", "Preferred shift")
+        ("PRF", "Preferred shift"),
+        ("VAC", "Vacation"),
     ]
 
     STATUS_CHOICES = [
@@ -37,6 +38,7 @@ class Person(models.Model):
     l_name = models.CharField(max_length=30)
     RTO_days = models.IntegerField(default=0)
     position = models.CharField(max_length=2, choices=POSITION_CHOICES)
+    email = models.EmailField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         if self.RTO_days == 0:
