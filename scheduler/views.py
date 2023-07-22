@@ -33,7 +33,7 @@ WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", 
 # Create your views here.
 def index_view(request):
     if request.method == "POST":
-        username = request.POST["username"]
+        username = request.POST["username"].lower()
         password = request.POST["password"]
         user = authenticate(request, username=username, password=password)
         if user is not None:
@@ -53,7 +53,6 @@ def index_view(request):
                 "start": i.date_start.strftime("%Y-%m-%d"),
                 "color": "green",
                 "id": i.id,
-                "type": i.type
             })
         elif i.type == "RTO":
             events_json.append({
@@ -63,7 +62,6 @@ def index_view(request):
                 "end": i.date_end.strftime("%Y-%m-%d"),
                 "color": "orange",
                 "id": i.id,
-                "type": i.type
             })
         else:
             events_json.append({
@@ -73,7 +71,6 @@ def index_view(request):
             "end": i.date_end.strftime("%Y-%m-%d"),
             "color": "blue",
             "id": i.id,
-            "type": i.type
             })
         if i.status =='P':
             events_json[-1]["color"] = "gray"
@@ -124,6 +121,7 @@ def create_event(request):
     
     
     # Get the number of RTOs for that day and position
+    total_rto_events = events.filter(type="RTO").count()
     tl_rto_events = events.filter(type="RTO", person__position="TL").count()
     cs_rto_events = events.filter(type="RTO", person__position="CS").count()
     ss_rto_events = events.filter(type="RTO", person__position="SS").count()
@@ -133,6 +131,8 @@ def create_event(request):
     if event_type == "RTO":
         if person.RTO_days <= 0:
             return HttpResponseBadRequest("RTO days are already 0")
+        if total_rto_events > 3:
+            return HttpResponseBadRequest("Total RTO max reached")
         if person.position == "TL" and tl_rto_events >= TL_RTO_MAX:
             return HttpResponseBadRequest("TL RTO max reached")
         elif person.position == "CS" and cs_rto_events >= CS_RTO_MAX_MON_THR and date.weekday() < 4:
@@ -155,7 +155,7 @@ def create_event(request):
         "event_id": obj.pk,
     }
 
-    # Email stuff DO NOT ENABLE UNTIL PERMISSION IS GRANTED BY STAFF MEMBERS
+    # # Email stuff DO NOT ENABLE UNTIL PERMISSION IS GRANTED BY STAFF MEMBERS
     # subject = 'Event Needs Approval'
     # html_message = render_to_string('../templates/scheduler/request_email.html', context)
     # plain_message = strip_tags(html_message)
@@ -165,8 +165,26 @@ def create_event(request):
     # # Otherwise, click here to quick approve http://pupper1n0.pythonanywhere.com/quick-approve/{obj.pk}\n
     # # TEMP: http://127.0.0.1:8000/quick-approve/{obj.pk}\n\n
     # # Thank you,\nScheduler"""
-    # to_email = ['elbouni.wassem@gmail.com']
-    # print("HI")
+    # to_email = ['elbouni.wassem@gmail.com']     # Will be changed to the email of the person in charge of approving events
+    # send_mail(
+    #     subject,
+    #     plain_message,
+    #     from_email,
+    #     to_email,
+    #     html_message=html_message,
+    #     fail_silently=False,
+    # )
+
+    # subject = 'Event submitted!'
+    # html_message = render_to_string('../templates/scheduler/request_email.html', context)
+    # plain_message = strip_tags(html_message)
+    # from_email = 'settings.EMAIL_HOST_USER'
+    # # message =  f"""<strong>{event_type}</strong> request by <strong>{person_name}</strong> for <strong>{date_start}</strong> has been submitted and is pending approval.\n\n
+    # # click here to see the request: http://pupper1n0.pythonanywhere.com/scheduler/ \n\n
+    # # Otherwise, click here to quick approve http://pupper1n0.pythonanywhere.com/quick-approve/{obj.pk}\n
+    # # TEMP: http://127.0.0.1:8000/quick-approve/{obj.pk}\n\n
+    # # Thank you,\nScheduler"""
+    # to_email = ['elbouni.wassem@gmail.com']     # Will be changed to the email of the person in charge of approving events
     # send_mail(
     #     subject,
     #     plain_message,

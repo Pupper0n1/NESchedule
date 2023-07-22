@@ -187,13 +187,39 @@ margin: 0 auto;
   }
 
   /* Custom CSS for mobile devices */
-  @media (max-width: 576px) {
+  @media (max-width: 1000px) {
     #fullwidth {
       max-width: 90%;
       width:90%;
     }
+    .fc-event-title{
+      font-size: 0em;
+    }
 
+    .fc-event-main{
+      height:7px;
+    }
 
   }
 
 
+
+  /* #eventCards {
+    padding-top:50px;
+  } */
+
+
+  .card {
+    margin-top:20px;
+    /* background-color: orange !important; */
+  }
+
+  .bg-custom-gray {
+    background-color: #808080 !important;
+    color:white !important;
+  }
+
+  .bg-custom-red {
+    background-color: red !important;
+    color:white !important;
+  }
