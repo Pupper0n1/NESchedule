@@ -95,29 +95,40 @@
 
 <script>
   function validateForm() {
-    var personInput = document.getElementById("inputGroupSelect03");
+    var personInput = document.getElementById("inputGroupSelect03").value;
 
+
+
+
+    let events = {{events | safe}}
+    
+    // Check if the person already has an event on the selected date
+    if (events.filter(event => event.person === personInput && event.start === document.getElementById("start-date-input").value).length > 0) {
+      showAlert("This person already has an event on this day.", "danger");
+      return false
+    }
+
+    // Check time input is valid
     if (document.getElementById("success-outlined").checked) {
       var timeInput = document.getElementById("time").value
       console.log(timeInput)
       if (!timeInput) {
         showAlert("Please select proper time.", "danger");
-
         return false
       }
     }
 
-
     // Check if the person field is selected
-    if (personInput.value === "Choose Who...") {
+    if (personInput === "Choose Who...") {
       showAlert("Please select a person.", "danger");
       return false; // Prevent form submission
     }
 
+    
 
 
-    
-    
+
+
     // If all validations pass, return true to allow form submission
     return true;
   }

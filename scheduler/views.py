@@ -53,6 +53,7 @@ def index_view(request):
                 "start": i.date_start.strftime("%Y-%m-%d"),
                 "color": "green",
                 "id": i.id,
+                "person": i.person.f_name,
             })
         elif i.type == "RTO":
             events_json.append({
@@ -62,6 +63,8 @@ def index_view(request):
                 "end": i.date_end.strftime("%Y-%m-%d"),
                 "color": "orange",
                 "id": i.id,
+                "person": i.person.f_name,
+
             })
         else:
             events_json.append({
@@ -71,6 +74,7 @@ def index_view(request):
             "end": i.date_end.strftime("%Y-%m-%d"),
             "color": "blue",
             "id": i.id,
+            "person": i.person.f_name,
             })
         if i.status =='P':
             events_json[-1]["color"] = "gray"
