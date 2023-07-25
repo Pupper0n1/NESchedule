@@ -17,7 +17,9 @@ class PersonFilter(admin.ModelAdmin):
     list_filter = ('boutique', 'position')
     search_fields = ('f_name', 'l_name', 'boutique__name', 'boutique__city', 'boutique__province')
 
+ 
 
+ 
 class EventFilter(admin.ModelAdmin):
     list_display = ('person','type', 'date_start', 'date_end', 'time', 'status', 'boutique')
     list_filter = ('boutique', 'type', 'status')
