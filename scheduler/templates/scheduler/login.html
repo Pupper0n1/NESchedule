@@ -4,6 +4,7 @@
 
 {% block content %}
 <link rel="stylesheet" href="../static/scheduler/css/login.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
 <div class="wrapper">
     <div class="logo">
@@ -12,7 +13,7 @@
     <div class="text-center mt-4 name">
         NESchedule
     </div>
-    <form action="{% url 'scheduler:index' %}" method="POST" class="p-3 mt-3">
+    <form action="{% url 'scheduler:index' pk=1 %}" method="POST" class="p-3 mt-3">
         {% csrf_token %}
         <div class="form-field d-flex align-items-center">
             <span class="far fa-user"></span>

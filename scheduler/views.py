@@ -92,8 +92,9 @@ def index_view(request, pk):
     serialized_people = Person.objects.all().values()
     serialized_people = serializers.serialize('json', Person.objects.all().order_by('f_name'))
     people = Person.objects.all().filter(boutique__id = pk).order_by('f_name')
+    boutique = Boutique.objects.get(id=pk)
 
-    context = {"people" : people, "events": events_json, "serialized_people":serialized_people, "boutique_id":pk}
+    context = {"people" : people, "events": events_json, "serialized_people":serialized_people, "boutique":boutique}
 
     return render(request, "scheduler/index.html", context)
     # return HttpResponse("Hello, world. You're at the scheduler index.")
@@ -281,7 +282,7 @@ def redirect_index(request):
     return redirect(reverse('scheduler:home'))
 
 
-def login_view(request):
+def login_view(request, pk):
     return render(request, 'scheduler/login.html')
 
 

@@ -187,7 +187,7 @@ margin: 0 auto;
   }
 
   /* Custom CSS for mobile devices */
-  @media (max-width: 1000px) {
+  @media (max-width: 990px) {
     #fullwidth {
       max-width: 90%;
       width:90%;
@@ -200,6 +200,44 @@ margin: 0 auto;
       height:7px;
     }
 
+    .card {
+      font-size: 3em;
+    }
+
+    .btn {
+      font-size: 2em !important;
+      min-width: 120px;
+    }
+
+    .large-font {
+      font-size: 3em !important;
+      margin-top:30px;
+    }
+
+    .custom-size {
+      max-width:90% !important;
+    }
+
+    #inputGroupSelect03 {
+      font-size: 3rem;
+      padding-left:25px;
+    }
+
+    #myModalCreateLabel, #myModalDeleteLabel {
+      font-size: 3rem;
+    }
+
+    .margin-top-5 {
+      margin-top: 50px;
+    }
+
+    #time {
+      font-size: 3rem;
+    }
+
+    .alert {
+      font-size: 2.5rem;
+    }
   }
 
 

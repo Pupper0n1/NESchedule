@@ -1,8 +1,11 @@
 {% extends 'scheduler/base.html' %}
 {% block content %}
 {% load static %}
-
-
+<nav class="navbar navbar-dark d-flex justify-content-center">
+  <h1><a href="{% url 'scheduler:home' %}" style='text-decoration:none'>{{boutique.name}} ({{boutique.city}})</a></h1>
+</nav>
+<div class="container-fluid text-center alerts">
+</div>
     <div class="col">
       
 
@@ -10,7 +13,7 @@
 
       <!-- Bootstrap Create Modal -->
       <div class="modal fade" id="create_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog modal-dialog-centered" id="custom-size" role="document" style="max-width:50%">
+        <div class="modal-dialog modal-dialog-centered custom-size" role="document" style="max-width:50%">
           <div class="modal-content">
             <div class="modal-header">
               <h4 class="modal-title" id="myModalCreateLabel">Add an Event</h4>
@@ -28,13 +31,13 @@
                 </div>
                 <h1>{{info.event.start}}</h1>
                 
-                <div class="form-check form-check-inline">
+                <div class="form-check form-check-inline margin-top-5">
                   <input type="radio" class="btn-check" name="options-outlined" id="rto-outlined" autocomplete="off" value="RTO" checked>
-                  <label class="btn btn-outline-warning" for="rto-outlined">RTO</label>
+                  <label class="btn btn-outline-warning large-font" for="rto-outlined" >RTO</label>
                 </div>
                 <div class="form-check form-check-inline">
                   <input type="radio" class="btn-check" name="options-outlined" id="success-outlined" autocomplete="off" value="PRF">
-                  <label class="btn btn-outline-success" for="success-outlined">Preference</label>
+                  <label class="btn btn-outline-success large-font" for="success-outlined">Preference</label>
                 </div>
 
                 <div id="preference-input" style="display: none;">
@@ -42,10 +45,10 @@
                 </div>
 
                 <input type="hidden" name="date" id="date-input">
-                <input type="hidden" name="boutique_id" value="{{boutique_id}}">
-                <div class="modal-footer d-flex justify-content-between">
-                  <button type="button" class="btn btn-secondary d-block" data-bs-dismiss="modal">Close</button>
-                  <button type="Submit" class="btn btn-success d-block" data-bs-dismiss="modal">Submit</button>
+                <input type="hidden" name="boutique_id" value="{{boutique.id}}">
+                <div class="modal-footer d-flex justify-content-between margin-top-5">
+                  <button type="button" class="btn btn-secondary d-block large-font" data-bs-dismiss="modal">Close</button>
+                  <button type="Submit" class="btn btn-success d-block large-font" data-bs-dismiss="modal">Submit</button>
                 </div>
               </form>
             </div>
@@ -56,7 +59,7 @@
 
       <!-- Bootstrap Delete Modal -->
       <div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" id="full_width">
-        <div class="modal-dialog modal-dialog-centered" role="document" id="full_width">
+        <div class="modal-dialog modal-dialog-centered custom-size" role="document" id="full_width">
           <div class="modal-content">
             <div class="modal-header">
               <h4 class="modal-title" id="myModalDeleteLabel">Delete an Event</h4>
@@ -69,14 +72,14 @@
                 {% if user.is_superuser %}
                 <p>Approve or Reject this event</p>
                 <div class="d-flex justify-content-around">
-                <button type="submit" class="btn btn-success d-block" name="status" value="A" data-bs-dismiss="modal">Approve</button>
-                <button type="submit" class="btn btn-warning d-block" name="status" value="R" data-bs-dismiss="modal">Reject</button>
+                <button type="submit" class="btn btn-success d-block large-font" name="status" value="A" data-bs-dismiss="modal">Approve</button>
+                <button type="submit" class="btn btn-warning d-block large-font" name="status" value="R" data-bs-dismiss="modal">Reject</button>
                 {% else %}
-                <p>Are you sure you want to delete this request?</p>
+                <p class="display-5">Are you sure you want to delete this request?</p>
                 <div class="d-flex justify-content-around">
                 {% endif %}
-                  <button type="submit" class="btn btn-danger d-block" data-bs-dismiss="modal" name="status" value="D">Delete</button>
-                  <button type="button" class="btn btn-secondary d-block" data-bs-dismiss="modal">Close</button>
+                  <button type="submit" class="btn btn-danger d-block large-font" data-bs-dismiss="modal" name="status" value="D">Delete</button>
+                  <button type="button" class="btn btn-secondary d-block large-font" data-bs-dismiss="modal">Close</button>
                 </div>
                 </form>
             </div>
@@ -87,7 +90,8 @@
   </div>
 
 
-  <div class="container" id="eventCards">
+  <p class='d-flex justify-content-center large-font text-primary' id='eventCardsHeader'></p>
+  <div class="container-fluid text-center" id="eventCards">
   </div>
 
 
@@ -109,7 +113,6 @@
     console.log("ON VALIDATE FORM")
     var personInput = document.getElementById("inputGroupSelect03").value;
     let events = {{events | safe}}
-
     // Check if the person already has an event on the selected date
     if (events.filter(event => event.person === personInput && event.start === document.getElementById("date-input").value).length > 0) {
       showAlert("This person already has an event on this day.", "danger");
@@ -119,7 +122,7 @@
     if (document.getElementById("success-outlined").checked) {
       var timeInput = document.getElementById("time").value
       if (!timeInput) {
-        showAlert("Please select proper time.", "danger");
+        showAlert("Please select a valid time.", "danger");
         return false
       }
     }
@@ -128,6 +131,7 @@
       showAlert("Please select a person.", "danger");
       return false; // Prevent form submission
     }
+    
     // Check if the person has any RTO days left
     let people = {{serialized_people | safe}}
     let rtoDays = findRTOdaysByName(personInput, people);
@@ -163,7 +167,7 @@
     alertDiv.appendChild(strongTag);
     alertDiv.appendChild(alertLink);
     
-    var containerDiv = document.querySelector(".container"); // Change this to the appropriate container where you want the alert to appear
+    var containerDiv = document.querySelector(".alerts"); // Change this to the appropriate container where you want the alert to appear
     containerDiv.insertBefore(alertDiv, containerDiv.firstChild);
   }
 
@@ -188,9 +192,8 @@
     containerDiv.innerHTML = ''; // Clear any existing content
   
     // Add the header element
-    var headerDiv = document.createElement("h1");
+    var headerDiv = document.getElementById("eventCardsHeader");
     headerDiv.textContent = "Events for " + startDate; // Assuming startDate is a valid date string or formatted as needed
-    containerDiv.appendChild(headerDiv);
   
     for (const event of events) {
       var cardDiv = document.createElement("div");
@@ -225,7 +228,7 @@
     buttonContainer.classList.add("d-flex", "justify-content-center", "mt-5");
   
     var button = document.createElement("button");
-    button.classList.add("btn", "btn-light");
+    button.classList.add("btn", "btn-light", "container-fluid", "btn");
     button.setAttribute('data-bs-toggle', 'modal');
     button.setAttribute('data-bs-target', '#create_modal');
     button.textContent = 'Add a new one';
@@ -264,7 +267,7 @@
         login_button: {
           text: 'Admin Login',
           click: function() {
-            window.location.href = '{% url 'scheduler:login_view' %}';
+            window.location.href = '{% url 'scheduler:login_view' pk=boutique.id %}';
           }
         },
         logout_button: {
@@ -326,7 +329,7 @@
       },
       
       eventClick: function(info) {
-        console.log(info.event.start)
+        console.log(info.event)
         // Retrieve the event ID
         var eventId = info.event.id;
 

@@ -11,7 +11,7 @@ urlpatterns = [
     path('set_event_status/', views.set_event_status, name='set_event_status'),
     path('quick-approve/<int:pk>/', views.quick_approve, name='quick_approve'),
     path('quick-reject/<int:pk>/', views.quick_reject, name='quick_reject'),
-    path('login/', views.login_view, name='login_view'),
+    path('login/<int:pk>', views.login_view, name='login_view'),
     path('logout/', views.logout_view, name='logout_view'),
 
     path('reset-password/', views.reset_password, name='reset_password'),
