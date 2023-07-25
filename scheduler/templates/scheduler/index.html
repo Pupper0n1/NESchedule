@@ -6,14 +6,14 @@
     <div class="col">
       
 
-      <div id='calendar'></div>
+      <div id='calendar' style="margin-top:8px"></div>
 
       <!-- Bootstrap Create Modal -->
       <div class="modal fade" id="create_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
         <div class="modal-dialog modal-dialog-centered" id="custom-size" role="document" style="max-width:50%">
           <div class="modal-content">
             <div class="modal-header">
-              <h4 class="modal-title" id="myModalLabel">Add an Event</h4>
+              <h4 class="modal-title" id="myModalCreateLabel">Add an Event</h4>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -41,8 +41,8 @@
                   <input id="time" name='time' type="time" class="form-control" placeholder="Enter preference" name="preference" style="margin-top:10px; text-align:center">
                 </div>
 
-                <input type="hidden" name="date" id="start-date-input">
-                <input type="hidden" name="date_end" id="end-date-input">
+                <input type="hidden" name="date" id="date-input">
+                <input type="hidden" name="boutique_id" value="{{boutique_id}}">
                 <div class="modal-footer d-flex justify-content-between">
                   <button type="button" class="btn btn-secondary d-block" data-bs-dismiss="modal">Close</button>
                   <button type="Submit" class="btn btn-success d-block" data-bs-dismiss="modal">Submit</button>
@@ -59,7 +59,7 @@
         <div class="modal-dialog modal-dialog-centered" role="document" id="full_width">
           <div class="modal-content">
             <div class="modal-header">
-              <h4 class="modal-title" id="myModalLabel">Delete an Event</h4>
+              <h4 class="modal-title" id="myModalDeleteLabel">Delete an Event</h4>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -78,7 +78,6 @@
                   <button type="submit" class="btn btn-danger d-block" data-bs-dismiss="modal" name="status" value="D">Delete</button>
                   <button type="button" class="btn btn-secondary d-block" data-bs-dismiss="modal">Close</button>
                 </div>
-
                 </form>
             </div>
           </div>
@@ -94,41 +93,51 @@
 
 
 <script>
+  function findRTOdaysByName(name, data) {
+    for (const person of data) {
+      if (person.fields.f_name === name) {
+        console.log(person.fields.f_name)
+        console.log(person.fields.RTO_days)
+        return person.fields.RTO_days;
+      }
+    }
+    return null; // Return null if the name is not found in the data
+  }
+
+
   function validateForm() {
+    console.log("ON VALIDATE FORM")
     var personInput = document.getElementById("inputGroupSelect03").value;
-
-
-
-
     let events = {{events | safe}}
-    
+
     // Check if the person already has an event on the selected date
-    if (events.filter(event => event.person === personInput && event.start === document.getElementById("start-date-input").value).length > 0) {
+    if (events.filter(event => event.person === personInput && event.start === document.getElementById("date-input").value).length > 0) {
       showAlert("This person already has an event on this day.", "danger");
       return false
     }
-
     // Check time input is valid
     if (document.getElementById("success-outlined").checked) {
       var timeInput = document.getElementById("time").value
-      console.log(timeInput)
       if (!timeInput) {
         showAlert("Please select proper time.", "danger");
         return false
       }
     }
-
     // Check if the person field is selected
     if (personInput === "Choose Who...") {
       showAlert("Please select a person.", "danger");
       return false; // Prevent form submission
     }
+    // Check if the person has any RTO days left
+    let people = {{serialized_people | safe}}
+    let rtoDays = findRTOdaysByName(personInput, people);
 
+    if (rtoDays <= 0) {
+      let str = "${personInput} has no RTO days left.}"
+      showAlert(`This ${personInput} has no RTO days left.`, "danger");
+      return false;
+    }
     
-
-
-
-
     // If all validations pass, return true to allow form submission
     return true;
   }
@@ -156,10 +165,7 @@
     
     var containerDiv = document.querySelector(".container"); // Change this to the appropriate container where you want the alert to appear
     containerDiv.insertBefore(alertDiv, containerDiv.firstChild);
-    
   }
-
-
 
 
   function filterEventsByDate(events, desiredDate) {
@@ -172,6 +178,7 @@
     document.getElementById('event-id').value = eventId;
     deleteModal.show();           
   }
+
 
   function generateEventDetails(events, startDate) {
     // Sort events array alphabetically based on the 'title' property
@@ -225,9 +232,6 @@
     buttonContainer.appendChild(button);
     containerDiv.appendChild(buttonContainer);
   }
-  
-  
-
 
   const rtoRadio = document.getElementById("rto-outlined");
   const preferenceRadio = document.getElementById("success-outlined");
@@ -247,10 +251,12 @@
     preferenceInput.style.display = "none";
   });
 
+
   preferenceRadio.addEventListener("click", () => {
     preferenceInput.style.display = "block";
   });
 
+  
   document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
     var calendar = new FullCalendar.Calendar(calendarEl, {
@@ -286,10 +292,41 @@
 
         center: 'title',
         right: 'today prev,next'},
-      selectable: true,
-      longPressDelay: 0,
+
+      dateClick: function(info) {
+        const prevHighlightedDate = document.querySelector('.highlighted-date');
+        if (prevHighlightedDate) {
+          prevHighlightedDate.classList.remove('highlighted-date');
+        }
+      
+        // Highlight the selected date
+        const selectedDateElement = info.dayEl;
+        console.log(selectedDateElement);
+        selectedDateElement.classList.add('highlighted-date');
+
+        let counter = 0;
+        //
+        if ($(window).width() < 1200) {
+          const filteredEvents = filterEventsByDate({{events|safe}}, info.dateStr);
+
+          generateEventDetails(filteredEvents, info.dateStr);        
+        }
+        else {
+          var createModal = new bootstrap.Modal(document.getElementById('create_modal'));
+          createModal.show();  
+        }
+        console.log(info.dayEl.dataset.date)
+        document.getElementById('date-input').value = info.dayEl.dataset.date
+        //
+
+
+        // Store the selected date range in hidden input field
+
+        console.log('Selected date: ' + info.dateStr);
+      },
       
       eventClick: function(info) {
+        console.log(info.event.start)
         // Retrieve the event ID
         var eventId = info.event.id;
 
@@ -304,40 +341,16 @@
           document.getElementById('event-id').value = eventId;
           deleteModal.show();      
         }
-        document.getElementById('start-date-input').value = startDate;
-        document.getElementById('end-date-input').value = endDate;
-
+        console.log("HERE")
+        console.log(info.event.start.toISOString().slice(0, 10))
+        document.getElementById('date-input').value = info.event.start.toISOString().slice(0, 10);
       },
-      
-      select: function(info) {
-        // Create and display the create modal
-        var startDate = info.startStr;
-        var endDate = info.endStr;
-
-        let counter = 0;
-        //
-        if ($(window).width() < 1200) {
-          const filteredEvents = filterEventsByDate({{events|safe}}, startDate);
-
-          generateEventDetails(filteredEvents, startDate);        
-        }
-        else {
-          var createModal = new bootstrap.Modal(document.getElementById('create_modal'));
-          createModal.show();  
-        }
-        //
-
-
-        // Store the selected date range in hidden input field
-
-        document.getElementById('start-date-input').value = startDate;
-        document.getElementById('end-date-input').value = endDate;
-        console.log('Selected range: ' + startDate + ' - ' + endDate);
-      }
     });
     calendar.render();  
 
   });
+
+  
 </script>
 
 {% endblock content %}

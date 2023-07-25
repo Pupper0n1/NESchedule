@@ -3,11 +3,16 @@
 <html lang='en'>
   <head>
     <meta charset='utf-8' />
-    <script src='../static/scheduler/js/index.global.min.js'></script>
-    <script src='../static/scheduler/js/custom.js'></script>
-    <script src='../static/scheduler/js/bootstrap.bundle.min.js'></script>
-    <link rel="stylesheet" href="../static/scheduler/css/custom.css">
-    <link rel="stylesheet" href="../static/scheduler/css/bootstrap.min(1).css">
+    {% comment %} <script src='../static/scheduler/js/index.global.min.js'></script> {% endcomment %}
+    {% comment %} <script src='../static/scheduler/js/custom.js'></script> {% endcomment %}
+    {% comment %} <script src='../static/scheduler/js/bootstrap.bundle.min.js'></script> {% endcomment %}
+    {% comment %} <link rel="stylesheet" href="../static/scheduler/css/custom.css"> {% endcomment %}
+    {% comment %} <link rel="stylesheet" href="../static/scheduler/css/bootstrap.min(1).css"> {% endcomment %}
+    <script src="{% static 'scheduler/js/index.global.min.js' %}" ></script>
+    <script src="{% static 'scheduler/js/custom.js'%}"></script>
+    <script src="{% static 'scheduler/js/bootstrap.bundle.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'scheduler/css/custom.css' %}">
+    <link rel="stylesheet" href="{% static 'scheduler/css/bootstrap.min(1).css' %}">
 
     
     <script src=" https://cdn.jsdelivr.net/npm/@fullcalendar/bootstrap5@6.1.8/index.global.min.js "></script>

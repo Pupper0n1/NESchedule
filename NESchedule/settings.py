@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-rkl3e2*mo8j#1#)60dggq9uogw99*iex22#vj5811t=2ny5ifb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['pupper1n0.pythonanywhere.com', '10.0.0.62']
 
 
 # Application definition
@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'scheduler.apps.SchedulerConfig',
-    'bootstrap5'
 ]
 
 MIDDLEWARE = [

@@ -223,3 +223,8 @@ margin: 0 auto;
     background-color: red !important;
     color:white !important;
   }
+
+
+  .highlighted-date {
+    background-color: #D1E5F2; /* Change this to any desired highlight color */
+  }

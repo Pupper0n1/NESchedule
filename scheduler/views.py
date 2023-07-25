@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .models import Event, Person
+from .models import Event, Person, Boutique
 from django.shortcuts import redirect
 from django.urls import reverse
 from datetime import datetime
@@ -19,6 +19,8 @@ import random
 import string
 from datetime import date
 
+from django.core import serializers
+
 # Maximum number of rtos per day by position and date
 MG_RTO_MAX = 1
 TL_RTO_MAX = 1
@@ -30,8 +32,12 @@ SS_RTO_MAX = 1
 WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
+def home(request):
+    context = {'boutiques': Boutique.objects.all()}
+    return render(request, 'scheduler/home.html', context=context)
+
 # Create your views here.
-def index_view(request):
+def index_view(request, pk):
     if request.method == "POST":
         username = request.POST["username"].lower()
         password = request.POST["password"]
@@ -41,7 +47,7 @@ def index_view(request):
         else:
             return HttpResponseBadRequest("Invalid username or password")
 
-    events = Event.objects.all()
+    events = Event.objects.all().filter(boutique__id=pk)
 
     events_json = []
 
@@ -83,7 +89,11 @@ def index_view(request):
     # print(events_json)
 
 
-    context = {"people" : Person.objects.all().order_by('f_name'), "events": events_json}
+    serialized_people = Person.objects.all().values()
+    serialized_people = serializers.serialize('json', Person.objects.all().order_by('f_name'))
+    people = Person.objects.all().filter(boutique__id = pk).order_by('f_name')
+
+    context = {"people" : people, "events": events_json, "serialized_people":serialized_people, "boutique_id":pk}
 
     return render(request, "scheduler/index.html", context)
     # return HttpResponse("Hello, world. You're at the scheduler index.")
@@ -95,19 +105,22 @@ def index_view(request):
 TIME_FORMAT_REGEX = r'^\d{2}:\d{2}$'  # Regular expression for HH:MM format
 
 def create_event(request):
+    print("HERE")
     if request.method != 'POST':
-        return redirect(reverse('scheduler:index'))
+        return redirect(reverse('scheduler:home'))
 
     person_name = request.POST.get('person')
     event_type = request.POST.get('options-outlined')
     date_start = request.POST.get('date')
+    print(date_start)
+    boutique_id = request.POST.get('boutique_id')
     time = None
 
 
     try: # Check if the person exists
         person = Person.objects.get(f_name=person_name)
     except Person.DoesNotExist:
-        return redirect(reverse('scheduler:index'))
+        return redirect(reverse('scheduler:index', args=[boutique_id]))
 
     if event_type == "PRF": # If the event is a PRF, get the time
         time = request.POST.get('time')
@@ -115,7 +128,8 @@ def create_event(request):
             return HttpResponseBadRequest("Invalid time format")
         time = datetime.strptime(time, "%H:%M").time()
 
-        
+    print(date_start)
+    print("ABOVE HERE")
     date = datetime.strptime(date_start, "%Y-%m-%d")
     # Check if the person already has an event on that day
     events = Event.objects.filter(date_start=date_start)
@@ -149,8 +163,9 @@ def create_event(request):
             return HttpResponseBadRequest("MG RTO max reached")
         
 
+    boutique = Boutique.objects.get(id=boutique_id)
 
-    obj = Event.objects.create(person=person, type=event_type, date_start=date_start, date_end=date_start, time=time, status="P")
+    obj = Event.objects.create(person=person, type=event_type, date_start=date_start, date_end=date_start, time=time, status="P", boutique=boutique)
     context = {
         "person": person_name,
         "event_type": event_type,
@@ -198,7 +213,7 @@ def create_event(request):
     #     fail_silently=False,
     # )
 
-    return redirect(reverse('scheduler:index'))
+    return redirect(reverse('scheduler:index', args=[boutique_id]))
 
 
 def quick_approve(request, pk):
@@ -217,7 +232,7 @@ def quick_approve(request, pk):
         event.status = "A"
         event.save()
     else:
-        return redirect(reverse('scheduler:index')) 
+        return redirect(reverse('scheduler:index', args=[event.boutique.id])) 
 
 
 def quick_reject(request, pk):
@@ -225,15 +240,15 @@ def quick_reject(request, pk):
     if event.status == "P":
         event.status = "R"
         event.save()
-    return redirect(reverse('scheduler:index'))
+    return redirect(reverse('scheduler:index', args=[event.boutique.id])) 
     
 
 
-def delete_event(request):
+def delete_event(request, pk):
+    event = Event.objects.get(id=pk)
     if request.method == 'POST':
-        event = request.POST.get('event_id')
-        Event.objects.get(id=event).delete()
-        return redirect(reverse('scheduler:index'))
+        event.delete()
+        return redirect(reverse('scheduler:index', args=[event.boutique.id]))
 
 
 def set_event_status(request):
@@ -241,29 +256,29 @@ def set_event_status(request):
         # print("HI")
         event_id = request.POST.get('event_id')
         status = request.POST.get('status')
-        obj = Event.objects.get(id=event_id)
+        event = Event.objects.get(id=event_id)
         # Perform actions based on the status value
-        if obj.status == "P":
-            if status == 'A' and obj.status != "A":
-                if obj.type == "RTO":
-                    person = Person.objects.get(id=obj.person.id)
+        if event.status == "P":
+            if status == 'A' and event.status != "A":
+                if event.type == "RTO":
+                    person = Person.objects.get(id=event.person.id)
                     if person.RTO_days <= 0:
                         return HttpResponseBadRequest("RTO days are already 0")
                     person.RTO_days = person.RTO_days - 1
                     person.save()
-                obj.status = "A"
-                obj.save()
+                event.status = "A"
+                event.save()
             elif status == 'R':
-                obj.status = "R"
-                obj.save()
+                event.status = "R"
+                event.save()
             elif status == 'D':
-                obj.delete()
-        return redirect(reverse('scheduler:index'))
+                event.delete()
+        return redirect(reverse('scheduler:index', args=[event.boutique.id]))
 
 
 
 def redirect_index(request):
-    return redirect(reverse('scheduler:index'))
+    return redirect(reverse('scheduler:home'))
 
 
 def login_view(request):
@@ -272,7 +287,7 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    return redirect(reverse('scheduler:index'))
+    return redirect(reverse('scheduler:home'))
 
 
 
