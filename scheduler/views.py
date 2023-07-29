@@ -3,21 +3,14 @@ from django.http import HttpResponse
 from .models import Event, Person, Boutique, ShiftCover
 from django.shortcuts import redirect
 from django.urls import reverse
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.http import HttpResponseBadRequest
-import re
 from django.core.mail import send_mail
 from django.conf import settings
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
 from django.contrib.auth import authenticate, login, logout
-from django import forms
-from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import PasswordResetView
 import random
 import string
-from datetime import date
 
 from django.core import serializers
 
@@ -61,16 +54,17 @@ def index_view(request, pk):
                 "color": "orange",
                 "id": i.id,
                 "person": i.person.f_name,
-
+                "comment": i.comment
             })
         else:
             events_json.append({
-            "title": i.person.f_name + " Vacation",
-            "type": i.type,
-            "date": i.date.strftime("%Y-%m-%d"),
-            "color": "blue",
-            "id": i.id,
-            "person": i.person.f_name,
+                "title": i.person.f_name + " Vacation",
+                "type": i.type,
+                "date": i.date.strftime("%Y-%m-%d"),
+                "color": "blue",
+                "id": i.id,
+                "person": i.person.f_name,
+                "comment": i.comment
             })
         if i.status =='P':
             events_json[-1]["color"] = "gray"
@@ -99,6 +93,24 @@ def index_view(request, pk):
 
 
 
+# Helper function that returns a list of dates between start_date and end_date
+def get_dates_between(start_date_str, end_date_str):
+    start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+    end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+    date_list = []
+
+    while start_date <= end_date:
+        date_list.append(start_date.strftime("%Y-%m-%d"))
+        start_date += timedelta(days=1)
+
+    return date_list
+
+
+def approved_rto_event_creator(person, date, boutique, comment):
+    event = Event(person=person, date=date, type="RTO", boutique=boutique, comment=comment)
+    event.save()
+    person.RTO_days -= 1
+    person.save()
 
 
 
@@ -116,11 +128,7 @@ def create_event(request):
     boutique_id = request.POST.get('boutique_id')
     try: # Check if the person exists
         person = Person.objects.get(f_name=person_name)
-        covering_person = Person.objects.get(f_name=request.POST.get('shift-covering-person'))
     except Person.DoesNotExist:
-        print
-        print("HIHIIHI")
-    
         return redirect(reverse('scheduler:index', args=[boutique_id]))
 
 
@@ -141,7 +149,7 @@ def create_event(request):
     
 
     # Check if the person has reached the maximum number of RTOs for that day and position
-    if event_type == "RTO":
+    if event_type == "RTO" or event_type == "MTO":
         if total_rto_events > 3:
             return HttpResponseBadRequest("Total RTO max reached")
         if person.position == "TL" and tl_rto_events >= TL_RTO_MAX:
@@ -155,17 +163,27 @@ def create_event(request):
         elif person.position == "MG" and mg_rto_events >= MG_RTO_MAX:
             return HttpResponseBadRequest("MG RTO max reached")
         
+        if event_type == "MTO":
+            start_date_loop = request.POST.get('start-date')
+            end_date_loop = request.POST.get('end-date')
+            difference_in_days = get_dates_between(start_date_loop, end_date_loop)
 
+            for date in difference_in_days:
+                approved_rto_event_creator(person, date, boutique, comment)
 
-        obj = Event.objects.create(person=person, type=event_type, date=date, status="P", boutique=boutique, comment=comment)
+        else:
+            Event.objects.create(person=person, type="RTO", date=date, status="P", boutique=boutique, comment=comment)
         context = {
             "person": person_name,
             "event_type": event_type,
             "date": date,
-            "event_id": obj.pk,
         }
     elif event_type == "SWP":
-        obj = ShiftCover.objects.create(original_person=person, covering_person=covering_person, date=date, boutique=boutique, comment=comment)
+        try:
+            covering_person = Person.objects.get(f_name=request.POST.get('shift-covering-person'))
+        except Person.DoesNotExist:
+            return redirect(reverse('scheduler:index', args=[boutique_id]))
+        ShiftCover.objects.create(original_person=person, covering_person=covering_person, date=date, boutique=boutique, comment=comment)
 
     # # Email stuff DO NOT ENABLE UNTIL PERMISSION IS GRANTED BY STAFF MEMBERS
     # subject = 'Event Needs Approval'
