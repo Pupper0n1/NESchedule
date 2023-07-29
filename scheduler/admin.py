@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Event, Person, Boutique
+from .models import Event, Person, Boutique, ShiftCover
 from django.contrib.admin import AdminSite
 from django.contrib.admin import SimpleListFilter
 
@@ -21,11 +21,12 @@ class PersonFilter(admin.ModelAdmin):
 
  
 class EventFilter(admin.ModelAdmin):
-    list_display = ('person','type', 'date_start', 'date_end', 'time', 'status', 'boutique')
+    list_display = ('person','type', 'date', 'status', 'boutique')
     list_filter = ('boutique', 'type', 'status')
     search_fields = ('person__f_name', 'person__l_name', 'type', 'boutique__name', 'boutique__city', 'boutique__province')
 
 admin.site.register(Event, EventFilter)
 admin.site.register(Person, PersonFilter)
 admin.site.register(Boutique)
+admin.site.register(ShiftCover)
 

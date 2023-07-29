@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .models import Event, Person, Boutique
+from .models import Event, Person, Boutique, ShiftCover
 from django.shortcuts import redirect
 from django.urls import reverse
 from datetime import datetime
@@ -48,25 +48,16 @@ def index_view(request, pk):
             return HttpResponseBadRequest("Invalid username or password")
 
     events = Event.objects.all().filter(boutique__id=pk)
+    shift_covers = ShiftCover.objects.all().filter(boutique__id=pk)
 
     events_json = []
 
     for i in events:
-        if i.type == "PRF":
-            events_json.append({
-                "title": i.person.f_name + " " + i.time.strftime("%I:%M %p"),
-                "type": i.type,
-                "start": i.date_start.strftime("%Y-%m-%d"),
-                "color": "green",
-                "id": i.id,
-                "person": i.person.f_name,
-            })
-        elif i.type == "RTO":
+        if i.type == "RTO":
             events_json.append({
                 "title": i.person.f_name + " RTO",
                 "type": i.type,
-                "start": i.date_start.strftime("%Y-%m-%d"),
-                "end": i.date_end.strftime("%Y-%m-%d"),
+                "date": i.date.strftime("%Y-%m-%d"),
                 "color": "orange",
                 "id": i.id,
                 "person": i.person.f_name,
@@ -76,8 +67,7 @@ def index_view(request, pk):
             events_json.append({
             "title": i.person.f_name + " Vacation",
             "type": i.type,
-            "start": i.date_start.strftime("%Y-%m-%d"),
-            "end": i.date_end.strftime("%Y-%m-%d"),
+            "date": i.date.strftime("%Y-%m-%d"),
             "color": "blue",
             "id": i.id,
             "person": i.person.f_name,
@@ -85,8 +75,16 @@ def index_view(request, pk):
         if i.status =='P':
             events_json[-1]["color"] = "gray"
         elif i.status =='R':
-            events_json[-1]["color"] = "red"
-    # print(events_json)
+            events_json[-1]["color"] = "blue"
+    #
+    for i in shift_covers:
+                events_json.append({
+                "title": f"{i.covering_person.f_name} Covered {i.original_person.f_name}",
+                "type": "SWP",
+                "date": i.date.strftime("%Y-%m-%d"),
+                "color": "purple",
+                "id": i.id,
+            })
 
 
     serialized_people = Person.objects.all().values()
@@ -103,53 +101,47 @@ def index_view(request, pk):
 
 
 
-TIME_FORMAT_REGEX = r'^\d{2}:\d{2}$'  # Regular expression for HH:MM format
 
 def create_event(request):
-    print("HERE")
     if request.method != 'POST':
         return redirect(reverse('scheduler:home'))
 
     person_name = request.POST.get('person')
     event_type = request.POST.get('options-outlined')
-    date_start = request.POST.get('date')
-    print(date_start)
+    date = request.POST.get('date')
+    date = datetime.strptime(date, "%Y-%m-%d")
+    comment = request.POST.get('comment')
+
+
     boutique_id = request.POST.get('boutique_id')
-    time = None
-
-
     try: # Check if the person exists
         person = Person.objects.get(f_name=person_name)
+        covering_person = Person.objects.get(f_name=request.POST.get('shift-covering-person'))
     except Person.DoesNotExist:
+        print
+        print("HIHIIHI")
+    
         return redirect(reverse('scheduler:index', args=[boutique_id]))
 
-    if event_type == "PRF": # If the event is a PRF, get the time
-        time = request.POST.get('time')
-        if not re.match(TIME_FORMAT_REGEX, time):
-            return HttpResponseBadRequest("Invalid time format")
-        time = datetime.strptime(time, "%H:%M").time()
 
-    print(date_start)
-    print("ABOVE HERE")
-    date = datetime.strptime(date_start, "%Y-%m-%d")
     # Check if the person already has an event on that day
-    events = Event.objects.filter(date_start=date_start)
+    events = Event.objects.filter(date=date)
+    boutique = Boutique.objects.get(id=boutique_id)
 
     if events.filter(person__f_name=person_name).exists(): # If the person already has an event on that day
         return HttpResponseBadRequest("Person already has an event on that day")
     
-    
     # Get the number of RTOs for that day and position
     total_rto_events = events.filter(type="RTO").count()
-    tl_rto_events = events.filter(type="RTO", person__position="TL").count()
-    cs_rto_events = events.filter(type="RTO", person__position="CS").count()
-    ss_rto_events = events.filter(type="RTO", person__position="SS").count()
-    mg_rto_events = events.filter(type="RTO", person__position="MG").count()
+    tl_rto_events = events.filter(type="RTO", person__position="TL", boutique__id = boutique_id).count()
+    cs_rto_events = events.filter(type="RTO", person__position="CS", boutique__id = boutique_id).count()
+    ss_rto_events = events.filter(type="RTO", person__position="SS", boutique__id = boutique_id).count()
+    mg_rto_events = events.filter(type="RTO", person__position="MG", boutique__id = boutique_id).count()
+    
+    
 
     # Check if the person has reached the maximum number of RTOs for that day and position
     if event_type == "RTO":
-        if person.RTO_days <= 0:
-            return HttpResponseBadRequest("RTO days are already 0")
         if total_rto_events > 3:
             return HttpResponseBadRequest("Total RTO max reached")
         if person.position == "TL" and tl_rto_events >= TL_RTO_MAX:
@@ -164,16 +156,16 @@ def create_event(request):
             return HttpResponseBadRequest("MG RTO max reached")
         
 
-    boutique = Boutique.objects.get(id=boutique_id)
 
-    obj = Event.objects.create(person=person, type=event_type, date_start=date_start, date_end=date_start, time=time, status="P", boutique=boutique)
-    context = {
-        "person": person_name,
-        "event_type": event_type,
-        "date": date_start,
-        "time": time,
-        "event_id": obj.pk,
-    }
+        obj = Event.objects.create(person=person, type=event_type, date=date, status="P", boutique=boutique, comment=comment)
+        context = {
+            "person": person_name,
+            "event_type": event_type,
+            "date": date,
+            "event_id": obj.pk,
+        }
+    elif event_type == "SWP":
+        obj = ShiftCover.objects.create(original_person=person, covering_person=covering_person, date=date, boutique=boutique, comment=comment)
 
     # # Email stuff DO NOT ENABLE UNTIL PERMISSION IS GRANTED BY STAFF MEMBERS
     # subject = 'Event Needs Approval'
@@ -263,8 +255,6 @@ def set_event_status(request):
             if status == 'A' and event.status != "A":
                 if event.type == "RTO":
                     person = Person.objects.get(id=event.person.id)
-                    if person.RTO_days <= 0:
-                        return HttpResponseBadRequest("RTO days are already 0")
                     person.RTO_days = person.RTO_days - 1
                     person.save()
                 event.status = "A"

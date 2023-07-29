@@ -238,6 +238,11 @@ margin: 0 auto;
     .alert {
       font-size: 2.5rem;
     }
+    
+  textarea {
+    height: 180px !important;
+    font-size: 40px !important;
+  }
   }
 
 
@@ -262,7 +267,14 @@ margin: 0 auto;
     color:white !important;
   }
 
+  .bg-custom-shift-cover {
+    background-color: purple !important;
+    color:white !important;
+  }
+
 
   .highlighted-date {
     background-color: #D1E5F2; /* Change this to any desired highlight color */
   }
+
+

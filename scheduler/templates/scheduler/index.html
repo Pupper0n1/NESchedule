@@ -20,29 +20,40 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <form action="{% url 'scheduler:create_event' %}" method="POST" id="event-form" onsubmit="return validateForm()">                {% csrf_token %}
+              <form action="{% url 'scheduler:create_event' %}" method="POST" id="event-form" onsubmit="return validateForm()">
+                {% csrf_token %}
                 <div class="input-group mb-3">
                   <select required name="person" class="form-select form-control" id="inputGroupSelect03" aria-label="Example select with button addon">
                     <option selected>Choose Who...</option>
                     {% for person in people %}
-                    <option value="{{person.f_name}}">{{person.f_name}}</option>
+                    <option value="{{person.f_name}}">{{person.f_name}} ({{person.position}})</option>
                     {% endfor %}
                   </select>
                 </div>
-                <h1>{{info.event.start}}</h1>
                 
                 <div class="form-check form-check-inline margin-top-5">
-                  <input type="radio" class="btn-check" name="options-outlined" id="rto-outlined" autocomplete="off" value="RTO" checked>
-                  <label class="btn btn-outline-warning large-font" for="rto-outlined" >RTO</label>
+                  <input type="radio" class="btn-check" name="options-outlined" id="rto-radio" autocomplete="off" value="RTO" checked>
+                  <label class="btn btn-outline-warning large-font" for="rto-radio" >RTO</label>
                 </div>
                 <div class="form-check form-check-inline">
-                  <input type="radio" class="btn-check" name="options-outlined" id="success-outlined" autocomplete="off" value="PRF">
-                  <label class="btn btn-outline-success large-font" for="success-outlined">Preference</label>
+                  <input type="radio" class="btn-check" name="options-outlined" id="shift-cover-radio" autocomplete="off" value="SWP">
+                  <label class="btn btn-outline-success large-font" for="shift-cover-radio">Shift Cover</label>
                 </div>
+                <div class="form-check form-check-inline">
+                  <input type="radio" class="btn-check" name="options-outlined" id="other-radio" autocomplete="off" value="SWP">
+                  <label class="btn btn-outline-info large-font" for="other-radio">Other</label>
+                </div>
+                <div id="shift-cover-input" style="display: none;">
+                  <select required name="shift-covering-person" class="form-select form-control" id="inputGroupSelect03" aria-label="Example select with button addon" style="width:50%; margin:20px">
+                    <option selected>Choose who will cover your shift!</option>
+                    {% for person in people %}
+                    <option value="{{person.f_name}}">{{person.f_name}} ({{person.position}})</option>
+                    {% endfor %}
+                  </select>
 
-                <div id="preference-input" style="display: none;">
-                  <input id="time" name='time' type="time" class="form-control" placeholder="Enter preference" name="preference" style="margin-top:10px; text-align:center">
-                </div>
+                                </div>
+
+                <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Optional Message" style="margin-top:18px;"></textarea>
 
                 <input type="hidden" name="date" id="date-input">
                 <input type="hidden" name="boutique_id" value="{{boutique.id}}">
@@ -58,7 +69,7 @@
       </div>
 
       <!-- Bootstrap Delete Modal -->
-      <div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" id="full_width">
+      <div class="modal fade" id="edit_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" id="full_width">
         <div class="modal-dialog modal-dialog-centered custom-size" role="document" id="full_width">
           <div class="modal-content">
             <div class="modal-header">
@@ -108,24 +119,111 @@
     return null; // Return null if the name is not found in the data
   }
 
+  const rtoRadio = document.getElementById('rto-radio');
+  const shiftCoverRadio = document.getElementById('shift-cover-radio');
+  const otherRadio = document.getElementById('other-radio')
+  const shiftCoverInput = document.getElementById('shift-cover-input')
+
+
+  rtoRadio.addEventListener("click", () => {
+    shiftCoverInput.style.display = "none";
+  });
+
+  otherRadio.addEventListener("click", () => {
+    shiftCoverInput.style.display = "none";
+  })
+
+  shiftCoverRadio.addEventListener("click", () => {
+    shiftCoverInput.style.display = "flex";
+  });
+
+
+  function sortEventsByDate(events) {
+    return events.sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateA - dateB;
+    });
+  }
+  
+  function doesEventExist(events, targetDate) {
+    return events.some(event => event.date === targetDate);
+  }
+  
+  
+  function incrementDate(dateString, days) {
+    const dateObj = new Date(dateString);
+    dateObj.setDate(dateObj.getDate() + days + 1);
+  
+  
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+  
+    return `${year}-${month}-${day}`;
+  }
+  
+  function checkConsecutiveDays(events, date, person) {
+    const filteredEvents = events.filter(event => event.person === person);
+  
+    const before1 = incrementDate(date, -1) 
+    const before2 = incrementDate(date, -2) 
+    const before3 = incrementDate(date, -3) 
+    const after1 =  incrementDate(date, 1) 
+    const after2 =  incrementDate(date, 2)
+    const after3 = incrementDate(date, 3) 
+    
+    console.log(before1)
+    
+    if ((doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, before2)) && doesEventExist(filteredEvents, before3) ||
+        (doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, before2)) && doesEventExist(filteredEvents, after1) ||
+        (doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, after2)) && doesEventExist(filteredEvents, before1) ||
+        (doesEventExist(filteredEvents, after3) && doesEventExist(filteredEvents, after2)) && doesEventExist(filteredEvents, after1) 
+    ){
+      return true;
+    }
+    return false;
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
 
   function validateForm() {
-    console.log("ON VALIDATE FORM")
-    var personInput = document.getElementById("inputGroupSelect03").value;
+    let personInput = document.getElementById("inputGroupSelect03").value;
     let events = {{events | safe}}
+    let date = document.getElementById("date-input").value
+
+    // Check if the event date is on or after today's date
+    let currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+    eventDate = new Date(date);
+
+    if (eventDate < currentDate) {
+      console.log("REACHED HERE")
+      showAlert("Please select a current or future date!", "danger")
+      return false;
+    }
+
+
     // Check if the person already has an event on the selected date
-    if (events.filter(event => event.person === personInput && event.start === document.getElementById("date-input").value).length > 0) {
+    if (events.filter(event => event.person === personInput && event.date === date).length > 0) {
       showAlert("This person already has an event on this day.", "danger");
       return false
     }
-    // Check time input is valid
-    if (document.getElementById("success-outlined").checked) {
-      var timeInput = document.getElementById("time").value
-      if (!timeInput) {
-        showAlert("Please select a valid time.", "danger");
-        return false
-      }
-    }
+
     // Check if the person field is selected
     if (personInput === "Choose Who...") {
       showAlert("Please select a person.", "danger");
@@ -133,14 +231,28 @@
     }
     
     // Check if the person has any RTO days left
-    let people = {{serialized_people | safe}}
-    let rtoDays = findRTOdaysByName(personInput, people);
 
-    if (rtoDays <= 0) {
-      let str = "${personInput} has no RTO days left.}"
-      showAlert(`This ${personInput} has no RTO days left.`, "danger");
-      return false;
+    let auth = "{{request.user.is_authenticated}}"
+    if (auth === "False") {
+      let people = {{serialized_people | safe}}
+      let rtoDays = findRTOdaysByName(personInput, people);
+  
+      if (rtoDays <= 0) {
+        let str = "${personInput} has no RTO days left.}"
+        showAlert(`This ${personInput} has no RTO days left.`, "danger");
+        return false;
+      }
+      
+      // Check if the person has more than 3 consecutive days already
+      const sortedEvents = sortEventsByDate(events);
+      if (checkConsecutiveDays(sortedEvents, date, personInput)) {
+        showAlert(`Please email managers in order to get more than 3 consecutive RTOs`, "danger");
+        return false;
+      }
     }
+
+
+
     
     // If all validations pass, return true to allow form submission
     return true;
@@ -173,18 +285,18 @@
 
 
   function filterEventsByDate(events, desiredDate) {
-    return events.filter(event => event.start === desiredDate);
+    return events.filter(event => event.date === desiredDate);
   }
 
 
   function mobileDeleteClick(eventId) {
-    var deleteModal = new bootstrap.Modal(document.getElementById('delete_modal'));
+    var deleteModal = new bootstrap.Modal(document.getElementById('edit_modal'));
     document.getElementById('event-id').value = eventId;
     deleteModal.show();           
   }
 
 
-  function generateEventDetails(events, startDate) {
+  function generateEventDetails(events, date) {
     // Sort events array alphabetically based on the 'title' property
     events.sort((a, b) => a.title.localeCompare(b.title));
   
@@ -193,7 +305,7 @@
   
     // Add the header element
     var headerDiv = document.getElementById("eventCardsHeader");
-    headerDiv.textContent = "Events for " + startDate; // Assuming startDate is a valid date string or formatted as needed
+    headerDiv.textContent = "Events for " + date; // Assuming date is a valid date string or formatted as needed
   
     for (const event of events) {
       var cardDiv = document.createElement("div");
@@ -207,6 +319,9 @@
       }
       else if (event.color == 'red') {
         cardDiv.classList.add("bg-custom-red")
+      }
+      else if (event.type == 'SWP') {
+        cardDiv.classList.add("bg-custom-shift-cover")
       }
       else {
         cardDiv.classList.add("bg-custom-gray");
@@ -236,28 +351,6 @@
     containerDiv.appendChild(buttonContainer);
   }
 
-  const rtoRadio = document.getElementById("rto-outlined");
-  const preferenceRadio = document.getElementById("success-outlined");
-  const preferenceInput = document.getElementById("preference-input");
-
-
-  function isDateInRange(targetDate, startDate, endDate) {
-    var targetTime = targetDate.getTime();
-    var startTime = startDate.getTime();
-    var endTime = endDate.getTime();
-  
-    return targetTime >= startTime && targetTime <= endTime;
-  }
-
-
-  rtoRadio.addEventListener("click", () => {
-    preferenceInput.style.display = "none";
-  });
-
-
-  preferenceRadio.addEventListener("click", () => {
-    preferenceInput.style.display = "block";
-  });
 
   
   document.addEventListener('DOMContentLoaded', function() {
@@ -335,18 +428,18 @@
 
 
         if ($(window).width() < 1200) {
-          const filteredEvents = filterEventsByDate({{events|safe}}, info.event.start.toISOString().slice(0, 10));
-          filteredEvents[0].start
-          generateEventDetails(filteredEvents, filteredEvents[0].start);        
+          const filteredEvents = filterEventsByDate({{events|safe}}, info.event.date.toISOString().slice(0, 10));
+          filteredEvents[0].date
+          generateEventDetails(filteredEvents, filteredEvents[0].date);        
         }
         else {
-          var deleteModal = new bootstrap.Modal(document.getElementById('delete_modal'));
+          var deleteModal = new bootstrap.Modal(document.getElementById('edit_modal'));
           document.getElementById('event-id').value = eventId;
           deleteModal.show();      
         }
         console.log("HERE")
-        console.log(info.event.start.toISOString().slice(0, 10))
-        document.getElementById('date-input').value = info.event.start.toISOString().slice(0, 10);
+        console.log(info.event.date.toISOString().slice(0, 10))
+        document.getElementById('date-input').value = info.event.date.toISOString().slice(0, 10);
       },
     });
     calendar.render();  
