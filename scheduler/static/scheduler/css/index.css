@@ -243,7 +243,15 @@ margin: 0 auto;
     height: 180px !important;
     font-size: 40px !important;
   }
+
+  #input-group-select {
+    font-size: 3rem;
   }
+
+  #delete-request-text {
+    font-size: 3rem !important;
+  }
+}
 
 
 
