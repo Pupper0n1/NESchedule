@@ -244,7 +244,7 @@ margin: 0 auto;
     font-size: 40px !important;
   }
 
-  #input-group-select {
+  #input-group-select, #shift-cover {
     font-size: 3rem;
   }
 

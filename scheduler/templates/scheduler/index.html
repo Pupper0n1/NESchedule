@@ -22,7 +22,7 @@
             <div class="modal-body">
               <form action="{% url 'scheduler:create_event' %}" method="POST" id="event-form" onsubmit="return validateForm()">
                 {% csrf_token %}
-                <div class="d-flex justify-content-center mb-4" style="">
+                <div class="d-flex justify-content-center mb-4">
                   <select required name="person" class="form-select form-control" id="input-group-select">
                     <option selected>Choose Who...</option>
                     {% for person in people %}
