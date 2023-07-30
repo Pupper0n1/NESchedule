@@ -22,7 +22,7 @@
             <div class="modal-body">
               <form action="{% url 'scheduler:create_event' %}" method="POST" id="event-form" onsubmit="return validateForm()">
                 {% csrf_token %}
-                <div class="input-group mb-3">
+                <div class="d-flex justify-content-center mb-4" style="">
                   <select required name="person" class="form-select form-control" id="input-group-select">
                     <option selected>Choose Who...</option>
                     {% for person in people %}
@@ -30,6 +30,7 @@
                     {% endfor %}
                   </select>
                 </div>
+                
                 <div class="form-check form-check-inline margin-top-5" id="rto-radio-container">
                   <input type="radio" class="btn-check" name="options-outlined" id="rto-radio" autocomplete="off" value="RTO" checked>
                   <label class="btn btn-outline-warning large-font" for="rto-radio">RTO</label>
@@ -43,7 +44,7 @@
                   <label class="btn btn-outline-success large-font" for="shift-cover-radio">Shift Cover</label>
                 </div>
                 <div class="form-check form-check-inline">
-                  <input type="radio" class="btn-check" name="options-outlined" id="other-radio" autocomplete="off" value="SWP">
+                  <input type="radio" class="btn-check" name="options-outlined" id="other-radio" autocomplete="off" value="OTH">
                   <label class="btn btn-outline-info large-font" for="other-radio">Other</label>
                 </div>
                 {% if user.is_superuser %}
@@ -60,7 +61,7 @@
                 {% endif %}
 
                 <div id="shift-cover-input" style="display:none;">
-                  <select required name="shift-covering-person" class="form-select form-control" id="shift-cover" aria-label="Example select with button addon" style="margin:20px">
+                  <select required name="shift-covering-person" class="form-select form-control" id="shift-cover" style="margin:20px">
                     <option selected>Choose who will cover your shift!</option>
                     {% for person in people %}
                     <option value="{{person.f_name}}">{{person.f_name}} ({{person.position}})</option>

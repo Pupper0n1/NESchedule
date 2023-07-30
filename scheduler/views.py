@@ -56,6 +56,16 @@ def index_view(request, pk):
                 "person": i.person.f_name,
                 "comment": i.comment
             })
+        elif i.type == "OTH":
+                events_json.append({
+                "title": i.person.f_name,
+                "type": i.type,
+                "date": i.date.strftime("%Y-%m-%d"),
+                "color": "#1d9978",
+                "id": i.id,
+                "person": i.person.f_name,
+                "comment": i.comment
+            })
         else:
             events_json.append({
                 "title": i.person.f_name + " Vacation",
@@ -184,6 +194,8 @@ def create_event(request):
         except Person.DoesNotExist:
             return redirect(reverse('scheduler:index', args=[boutique_id]))
         ShiftCover.objects.create(original_person=person, covering_person=covering_person, date=date, boutique=boutique, comment=comment)
+    elif event_type == "OTH":
+        Event.objects.create(person=person, type="OTH", date=date, status="O", boutique=boutique, comment=comment)
 
     # # Email stuff DO NOT ENABLE UNTIL PERMISSION IS GRANTED BY STAFF MEMBERS
     # subject = 'Event Needs Approval'

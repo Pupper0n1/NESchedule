@@ -7,13 +7,15 @@ class Event(models.Model):
         ("RTO", "Requested Time Off"),
         ("PRF", "Preferred shift"),
         ("VAC", "Vacation"),
-        ("SWP", "Swap Shift")
+        ("SWP", "Swap Shift"),
+        ("OTH", "Other")
     ]
 
     STATUS_CHOICES = [
         ("P", "Pending"),
         ("A", "Approved"),
-        ("D", "Denied")
+        ("D", "Denied"),
+        ("O", "Other")
     ]
     person = models.ForeignKey('Person', on_delete=models.SET_NULL, null=True)
     type = models.CharField(max_length=3, choices=EVENT_CHOICES)
