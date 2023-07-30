@@ -280,6 +280,10 @@ margin: 0 auto;
     color:white !important;
   }
 
+  .bg-custom-oth {
+    background-color: #1d9978;
+  }
+
 
   .highlighted-date {
     background-color: #D1E5F2; /* Change this to any desired highlight color */

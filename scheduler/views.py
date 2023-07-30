@@ -56,7 +56,7 @@ def index_view(request, pk):
                 "person": i.person.f_name,
                 "comment": i.comment
             })
-        elif i.type == "OTH":
+        elif i.type == "OTH" and request.user.is_superuser:
                 events_json.append({
                 "title": i.person.f_name,
                 "type": i.type,
