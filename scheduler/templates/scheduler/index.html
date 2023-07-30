@@ -213,18 +213,17 @@
 
   function validateForm() {
     let personInput = document.getElementById("input-group-select").value;
-    let events = {{events | safe}}
-    let date = document.getElementById("date-input").value
-
-    // Check if the event date is on or after today's date
-
-
+    let events = {{events | safe}};
+    let people = {{serialized_people | safe}};
+    let date = document.getElementById("date-input").value;
+    let radioValue = document.querySelector('input[name="options-outlined"]:checked').value;
 
     // Check if the person already has an event on the selected date
     if (events.filter(event => event.person === personInput && event.date === date).length > 0) {
       showAlert("This person already has an event on this day.", "danger");
       return false
     }
+
 
     // Check if the person field is selected
     if (personInput === "Choose Who...") {
@@ -236,10 +235,10 @@
 
     let auth = "{{request.user.is_authenticated}}"
     if (auth === "False") {
-      let people = {{serialized_people | safe}}
+      let people = {{serialized_people | safe}};
       let rtoDays = findRTOdaysByName(personInput, people);
   
-      if (rtoDays <= 0) {
+      if ((radioValue==="RTO" || radioValue==="MTO") && rtoDays <= 0) {
         let str = "${personInput} has no RTO days left.}"
         showAlert(`${personInput} has no RTO days left.`, "danger");
         return false;
@@ -262,6 +261,17 @@
         console.log("REACHED HERE")
         showAlert("Please select a current or future date!", "danger")
         return false;
+      }
+
+      if (radioValue == "SWP") {
+        coverPerson = document.getElementById("shift-cover").value;
+        let people = {{serialized_people | safe}}
+        console.log(people.filter(person => person.fields.f_name === personInput)[0].fields.position)
+        console.log(people.filter(person => person.fields.f_name === coverPerson)[0].fields.position)
+        if (people.filter(person => person.fields.f_name === personInput)[0].fields.position != people.filter(person => person.fields.f_name === coverPerson)[0].fields.position && coverPerson != personInput) {
+          showAlert("Please select a person with a different position!", "danger")
+          return false;
+        }
       }
     }
 
