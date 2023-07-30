@@ -66,7 +66,7 @@ def index_view(request, pk):
                 "person": i.person.f_name,
                 "comment": i.comment
             })
-        else:
+        elif i.type == "VAC":
             events_json.append({
                 "title": i.person.f_name + " Vacation",
                 "type": i.type,
