@@ -276,25 +276,35 @@ def delete_event(request, pk):
 
 def set_event_status(request):
     if request.method == 'POST':
-        # print("HI")
+        typeOfEvent = request.POST.get('event_type')
         event_id = request.POST.get('event_id')
-        status = request.POST.get('status')
-        event = Event.objects.get(id=event_id)
-        # Perform actions based on the status value
-        if event.status == "P":
-            if status == 'A' and event.status != "A":
-                if event.type == "RTO":
-                    person = Person.objects.get(id=event.person.id)
-                    person.RTO_days = person.RTO_days - 1
-                    person.save()
-                event.status = "A"
-                event.save()
-            elif status == 'R':
-                event.status = "R"
-                event.save()
-            elif status == 'D':
-                event.delete()
-        return redirect(reverse('scheduler:index', args=[event.boutique.id]))
+        print(typeOfEvent)
+        if not request.user.is_superuser:
+            shiftCover = ShiftCover.objects.get(id=event_id)
+            return redirect(reverse('scheduler:index', args=[shiftCover.boutique.id]))
+
+        if typeOfEvent == "SWP":
+            shiftCover = ShiftCover.objects.get(id=request.POST.get('event_id'))
+            shiftCover.delete()
+            return redirect(reverse('scheduler:index', args=[shiftCover.boutique.id]))
+        else:
+            event = Event.objects.get(id=event_id)
+            status = request.POST.get('status')
+            # Perform actions based on the status value
+            if event.status == "P":
+                if status == 'A' and event.status != "A":
+                    if event.type == "RTO":
+                        person = Person.objects.get(id=event.person.id)
+                        person.RTO_days = person.RTO_days - 1
+                        person.save()
+                    event.status = "A"
+                    event.save()
+                elif status == 'R':
+                    event.status = "R"
+                    event.save()
+                elif status == 'D':
+                    event.delete()
+            return redirect(reverse('scheduler:index', args=[event.boutique.id]))
 
 
 

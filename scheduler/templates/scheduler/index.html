@@ -93,11 +93,12 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <form action="{% url 'scheduler:set_event_status' %}" method="POST" id="event-form">
+              <form action="{% url 'scheduler:set_event_status' %}" method="POST" id="event-form" onsubmit="return editForm()">
                 {% csrf_token %}
                 <input type="hidden" name="event_id" id="event-id">
+                <input type="hidden" name="event_type" id="event-type">
                 {% if user.is_superuser %}
-                <p id="event-comment"></p>
+                <p id="event-comment" value=""></p>
                 <div class="d-flex justify-content-around">
                 <button type="submit" class="btn btn-success d-block large-font" name="status" value="A" data-bs-dismiss="modal">Approve</button>
                 <button type="submit" class="btn btn-warning d-block large-font" name="status" value="R" data-bs-dismiss="modal">Reject</button>
@@ -123,6 +124,10 @@
 
 
 <script>
+  function editForm() {
+
+    return true;
+  }
   if ("{{user.is_superuser}}" === "False") {
     const rtoRadioContainer = document.getElementById('multiple-radio-container');
     rtoRadioContainer.style.display = 'none';
@@ -472,10 +477,12 @@
           const modalEditLabel = document.getElementById('myModalEditLabel');
           const comment = document.getElementById('event-comment');
           modalEditLabel.textContent = `${info.event.title} ${info.event.start.toISOString().slice(0, 10)}`;
-          console.log(info.event)
+          if (typeof comment !== 'null')
           comment.textContent = info.event.extendedProps.comment;
         }
         document.getElementById('date-input').value = info.event.start.toISOString().slice(0, 10);
+        document.getElementById('event-type').value = info.event.extendedProps.type;
+        console.log(document.getElementById('event-type').value)
         
       },
     });
