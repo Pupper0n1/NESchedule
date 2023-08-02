@@ -207,7 +207,7 @@
     
     if ((doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, before2)) && doesEventExist(filteredEvents, before3) ||
         (doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, before2)) && doesEventExist(filteredEvents, after1) ||
-        (doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, after2)) && doesEventExist(filteredEvents, before1) ||
+        (doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, after2)) && doesEventExist(filteredEvents, after1) ||
         (doesEventExist(filteredEvents, after3) && doesEventExist(filteredEvents, after2)) && doesEventExist(filteredEvents, after1) 
     ){
       return true;
