@@ -15,11 +15,6 @@ import string
 from django.core import serializers
 
 # Maximum number of rtos per day by position and date
-MG_RTO_MAX = 1
-TL_RTO_MAX = 1
-CS_RTO_MAX_MON_THR = 2
-CS_RTO_MAX_FRI_SUN = 1
-SS_RTO_MAX = 1
 
 
 WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -52,9 +47,11 @@ def index_view(request, pk):
                 "type": i.type,
                 "date": i.date.strftime("%Y-%m-%d"),
                 "color": "orange",
+                "status": i.status,
                 "id": i.id,
                 "person": i.person.f_name,
-                "comment": i.comment
+                "comment": i.comment,
+                "position": i.person.position
             })
         elif i.type == "OTH" and request.user.is_superuser:
                 events_json.append({
@@ -64,17 +61,9 @@ def index_view(request, pk):
                 "color": "#1d9978",
                 "id": i.id,
                 "person": i.person.f_name,
-                "comment": i.comment
-            })
-        elif i.type == "VAC":
-            events_json.append({
-                "title": i.person.f_name + " Vacation",
-                "type": i.type,
-                "date": i.date.strftime("%Y-%m-%d"),
-                "color": "blue",
-                "id": i.id,
-                "person": i.person.f_name,
-                "comment": i.comment
+                "comment": i.comment,
+                "position": i.person.position,
+                "status":"A"
             })
         if i.status =='P':
             events_json[-1]["color"] = "gray"
@@ -146,7 +135,7 @@ def create_event(request):
     events = Event.objects.filter(date=date)
     boutique = Boutique.objects.get(id=boutique_id)
 
-    if events.filter(person__f_name=person_name).exists(): # If the person already has an event on that day
+    if events.filter(person__f_name=person_name, type="RTO").exists(): # If the person already has an event on that day
         return HttpResponseBadRequest("Person already has an event on that day")
     
     # Get the number of RTOs for that day and position
@@ -157,7 +146,11 @@ def create_event(request):
     mg_rto_events = events.filter(type="RTO", person__position="MG", boutique__id = boutique_id).count()
     
     
-
+    MG_RTO_MAX = 1
+    TL_RTO_MAX = 1
+    CS_RTO_MAX_MON_THR = 2
+    CS_RTO_MAX_FRI_SUN = 1
+    SS_RTO_MAX = 1
     # Check if the person has reached the maximum number of RTOs for that day and position
     if event_type == "RTO" or event_type == "MTO":
         if total_rto_events > 3:
@@ -278,33 +271,42 @@ def set_event_status(request):
     if request.method == 'POST':
         typeOfEvent = request.POST.get('event_type')
         event_id = request.POST.get('event_id')
+        status = request.POST.get('status')
         print(typeOfEvent)
-        if not request.user.is_superuser:
-            shiftCover = ShiftCover.objects.get(id=event_id)
-            return redirect(reverse('scheduler:index', args=[shiftCover.boutique.id]))
 
-        if typeOfEvent == "SWP":
-            shiftCover = ShiftCover.objects.get(id=request.POST.get('event_id'))
-            shiftCover.delete()
-            return redirect(reverse('scheduler:index', args=[shiftCover.boutique.id]))
-        else:
-            event = Event.objects.get(id=event_id)
-            status = request.POST.get('status')
-            # Perform actions based on the status value
-            if event.status == "P":
-                if status == 'A' and event.status != "A":
-                    if event.type == "RTO":
-                        person = Person.objects.get(id=event.person.id)
-                        person.RTO_days = person.RTO_days - 1
-                        person.save()
-                    event.status = "A"
-                    event.save()
-                elif status == 'R':
-                    event.status = "R"
-                    event.save()
-                elif status == 'D':
+        if not request.user.is_superuser:
+            if typeOfEvent == "RTO":
+                event = Event.objects.get(id=event_id)
+                if event.status == "P":
                     event.delete()
-            return redirect(reverse('scheduler:index', args=[event.boutique.id]))
+                return redirect(reverse('scheduler:index', args=[event.boutique.id]))
+
+            else:
+                return HttpResponseBadRequest("You do not have permission to do this")
+
+        else:
+
+            if typeOfEvent == "SWP":
+                shiftCover = ShiftCover.objects.get(id=request.POST.get('event_id'))
+                shiftCover.delete()
+                return redirect(reverse('scheduler:index', args=[shiftCover.boutique.id]))
+            else:
+                event = Event.objects.get(id=event_id)
+                # Perform actions based on the status value
+                if event.status == "P":
+                    if status == 'A' and event.status != "A":
+                        if event.type == "RTO":
+                            person = Person.objects.get(id=event.person.id)
+                            person.RTO_days = person.RTO_days - 1
+                            person.save()
+                        event.status = "A"
+                        event.save()
+                    elif status == 'R':
+                        event.status = "R"
+                        event.save()
+                    elif status == 'D':
+                        event.delete()
+                return redirect(reverse('scheduler:index', args=[event.boutique.id]))
 
 
 

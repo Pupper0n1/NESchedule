@@ -7,10 +7,7 @@
 <div class="container-fluid text-center alerts">
 </div>
     <div class="col">
-      
-
       <div id='calendar' style="margin-top:8px"></div>
-
       <!-- Bootstrap Create Modal -->
       <div class="modal fade" id="create_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
         <div class="modal-dialog modal-dialog-centered custom-size" role="document" style="max-width:50%">
@@ -89,7 +86,7 @@
         <div class="modal-dialog modal-dialog-centered custom-size" role="document" id="full_width">
           <div class="modal-content">
             <div class="modal-header">
-              <h4 class="modal-title" id="myModalEditLabel">Delete an Event</h4>
+              <h4 class="modal-title" id="myModalEditLabel">Edit an Event</h4>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -125,9 +122,34 @@
 
 <script>
   function editForm() {
+    // Prevent the form from submitting immediately
+    // event.preventDefault();
+    const clickedButton = event.target.querySelector('[type="submit"]:focus');
+    const buttonType = clickedButton.value;
 
-    return true;
+    if ("{{user.is_superuser}}" === "True") {
+      return true;
+    }
+
+    if ("{{user.is_superuser}}" === "False" && buttonType !== "D") {
+      showAlert("`have permission to do this action.", "danger");
+      return false;
+    }
+
+    else if("{{user.is_superuser}}" === "False" && buttonType === "D") {
+      const event_id = document.getElementById('event-id').value;
+      const events = {{events | safe}};
+      if (events.filter(event => event.id==event_id)[0].status === "P") {
+        return true;
+      }
+    }
+
+    showAlert("You do not have permission to do this action.", "danger");
+    return false;
+
   }
+
+
   if ("{{user.is_superuser}}" === "False") {
     const rtoRadioContainer = document.getElementById('multiple-radio-container');
     rtoRadioContainer.style.display = 'none';
@@ -207,14 +229,13 @@
     
     if ((doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, before2)) && doesEventExist(filteredEvents, before3) ||
         (doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, before2)) && doesEventExist(filteredEvents, after1) ||
-        (doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, after2)) && doesEventExist(filteredEvents, before1) ||
+        (doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, after2)) && doesEventExist(filteredEvents, after1) ||
         (doesEventExist(filteredEvents, after3) && doesEventExist(filteredEvents, after2)) && doesEventExist(filteredEvents, after1) 
     ){
       return true;
     }
     return false;
   }
-  
 
   function validateForm() {
     let personInput = document.getElementById("input-group-select").value;
@@ -222,9 +243,16 @@
     let people = {{serialized_people | safe}};
     let date = document.getElementById("date-input").value;
     let radioValue = document.querySelector('input[name="options-outlined"]:checked').value;
+    let person = people.filter(person => person.fields.f_name === personInput)[0];
+    // parseInt("{{boutique.MAX_RTO_CS_WEEKDAY}}")
+    let dateValue = new Date(date);
+    dateValue.setDate(dateValue.getDate() + 1);
+    console.log(dateValue)
+
+
 
     // Check if the person already has an event on the selected date
-    if (events.filter(event => event.person === personInput && event.date === date).length > 0) {
+    if (events.filter(event => event.person === personInput && event.date === date && event.type==="RTO").length > 0) {
       showAlert("This person already has an event on this day.", "danger");
       return false
     }
@@ -260,7 +288,7 @@
       let eventDate = new Date(date);
       eventDate.setDate(eventDate.getDate() + 1);
       currentDate.setHours(0, 0, 0, 0);
-      eventDate.setHours(0, 0, 0, 0);
+      eventDate.setHours(0, 0, 0, 0); 
   
       if (eventDate < currentDate) {
         console.log("REACHED HERE")
@@ -477,8 +505,10 @@
           const modalEditLabel = document.getElementById('myModalEditLabel');
           const comment = document.getElementById('event-comment');
           modalEditLabel.textContent = `${info.event.title} ${info.event.start.toISOString().slice(0, 10)}`;
-          if (typeof comment !== 'null')
-          comment.textContent = info.event.extendedProps.comment;
+          try {
+            comment.textContent = info.event.extendedProps.comment;
+          } catch (error) {
+          }
         }
         document.getElementById('date-input').value = info.event.start.toISOString().slice(0, 10);
         document.getElementById('event-type').value = info.event.extendedProps.type;

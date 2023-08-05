@@ -81,6 +81,16 @@ class Boutique(models.Model):
     phone_number = models.CharField(max_length=10, null=True, blank=True)
     email = models.EmailField(max_length=255, null=True, blank=True)
     manager = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    MAX_RTO_CS_WEEKDAY = models.PositiveIntegerField(default=0)
+    MAX_RTO_CS_WEEKEND = models.PositiveIntegerField(default=0)
+    MAX_RTO_SS_WEEKDAY = models.PositiveIntegerField(default=0)
+    MAX_RTO_SS_WEEKEND = models.PositiveIntegerField(default=0)
+    MAX_RTO_TL_WEEKDAY = models.PositiveIntegerField(default=0)
+    MAX_RTO_TL_WEEKEND = models.PositiveIntegerField(default=0)
+    MAX_RTO_MG = models.PositiveIntegerField(default=0)
+    MAX_RTO_TOTAL_WEEKDAY = models.PositiveIntegerField(default=0)
+    MAX_RTO_TOTAL_WEEKEND = models.PositiveIntegerField(default=0)
+    MAX_RTO_SPECIAL_EVENTS = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return f"{self.name} in {self.city}, {self.province}"
