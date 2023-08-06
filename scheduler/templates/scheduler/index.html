@@ -373,7 +373,7 @@
       var cardDiv = document.createElement("div");
       cardDiv.classList.add("card");
   
-      if (event.color == 'green') {
+      {% comment %} if (event.color == 'green') {
         cardDiv.classList.add("bg-success");
       }
       else if (event.color == 'orange') {
@@ -393,7 +393,22 @@
       }
       else {
         cardDiv.classList.add("bg-custom-gray");
+      } {% endcomment %}
+
+
+      cardDiv.style.backgroundColor = event.color;
+      cardDiv.style.color = event.text_color;
+
+      if (event.type=="OTH") {
+        cardDiv.style.backgroundColor = "green";
       }
+      else if (event.status == 'A') {
+        cardDiv.style.backgroundColor = "orange";
+      }
+      
+      cardDiv.style.color = "white";
+
+
   
       var cardHeaderDiv = document.createElement("div");
       cardHeaderDiv.classList.add("card-header");

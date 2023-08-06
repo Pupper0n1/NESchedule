@@ -47,6 +47,7 @@ def index_view(request, pk):
                 "type": i.type,
                 "date": i.date.strftime("%Y-%m-%d"),
                 "color": "orange",
+                "text_color": "white",
                 "status": i.status,
                 "id": i.id,
                 "person": i.person.f_name,
@@ -59,6 +60,7 @@ def index_view(request, pk):
                 "type": i.type,
                 "date": i.date.strftime("%Y-%m-%d"),
                 "color": "#1d9978",
+                "text_color": "white",
                 "id": i.id,
                 "person": i.person.f_name,
                 "comment": i.comment,
@@ -76,6 +78,7 @@ def index_view(request, pk):
                 "type": "SWP",
                 "date": i.date.strftime("%Y-%m-%d"),
                 "color": "purple",
+                "text_color": "white",
                 "id": i.id,
             })
 
