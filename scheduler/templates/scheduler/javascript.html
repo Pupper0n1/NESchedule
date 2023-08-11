@@ -1,0 +1,409 @@
+{% block javascript %}
+
+<script>
+    function editForm() {
+        if ("{{user.is_superuser}}" === "True") {
+            return true;
+        }
+        const event_id = document.getElementById('event-id').value;
+        const events = {{events | safe}};
+        if (events.filter(event => event.id==event_id)[0].status === "P") {
+            return true;
+        }
+    
+        showAlert("You do not have permission to do this action.", "danger");
+        return false;
+    }
+  
+  
+    if ("{{user.is_superuser}}" === "False") {
+      const rtoRadioContainer = document.getElementById('multiple-radio-container');
+      rtoRadioContainer.style.display = 'none';
+    }
+  
+    
+    function findRTOdaysByName(name, data) {
+      for (const person of data) {
+        if (person.fields.f_name === name) {
+          return person.fields.RTO_days;
+        }
+      }
+      return null; // Return null if the name is not found in the data
+    }
+  
+    const rtoRadio = document.getElementById('rto-radio');
+    const shiftCoverRadio = document.getElementById('shift-cover-radio');
+    const otherRadio = document.getElementById('other-radio');
+    const shiftCoverInput = document.getElementById('shift-cover-input');
+    const multipleRadio = document.getElementById('multiple-radio');
+    const multipleInput = document.getElementById('multiple-rto-container');
+  
+    multipleRadio.addEventListener("click", () => {
+      multipleInput.style.display = "block";
+    })
+  
+    rtoRadio.addEventListener("click", () => {
+      shiftCoverInput.style.display = "none";
+      multipleInput.style.display = "none";
+    });
+  
+    otherRadio.addEventListener("click", () => {
+      shiftCoverInput.style.display = "none";
+      multipleInput.style.display = "none";
+    })
+  
+    shiftCoverRadio.addEventListener("click", () => {
+      shiftCoverInput.style.display = "flex";
+      multipleInput.style.display = "none";
+    });
+  
+  
+    function sortEventsByDate(events) {
+      return events.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateA - dateB;
+      });
+    }
+    
+    function doesEventExist(events, targetDate) {
+      return events.some(event => event.date === targetDate);
+    }
+    
+    function incrementDate(dateString, days) {
+      const dateObj = new Date(dateString);
+      dateObj.setDate(dateObj.getDate() + days + 1);
+    
+    
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+    
+      return `${year}-${month}-${day}`;
+    }
+    
+    function checkConsecutiveDays(events, date, person) {
+      const filteredEvents = events.filter(event => event.person === person);
+    
+      const before1 = incrementDate(date, -1) 
+      const before2 = incrementDate(date, -2) 
+      const before3 = incrementDate(date, -3) 
+      const after1 =  incrementDate(date, 1) 
+      const after2 =  incrementDate(date, 2)
+      const after3 = incrementDate(date, 3) 
+      
+      console.log(before1)
+      
+      if ((doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, before2)) && doesEventExist(filteredEvents, before3) ||
+          (doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, before2)) && doesEventExist(filteredEvents, after1) ||
+          (doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, after2)) && doesEventExist(filteredEvents, after1) ||
+          (doesEventExist(filteredEvents, after3) && doesEventExist(filteredEvents, after2)) && doesEventExist(filteredEvents, after1) 
+      ){
+        return true;
+      }
+      return false;
+    }
+  
+    function validateForm() {
+      let personInput = document.getElementById("input-group-select").value;
+      let events = {{events | safe}};
+      let people = {{serialized_people | safe}};
+      let date = document.getElementById("date-input").value;
+      let radioValue = document.querySelector('input[name="options-outlined"]:checked').value;
+      let person = people.filter(person => person.fields.f_name === personInput)[0];
+      // parseInt("{{boutique.MAX_RTO_CS_WEEKDAY}}")
+      let dateValue = new Date(date);
+      dateValue.setDate(dateValue.getDate() + 1);
+      console.log(dateValue)
+  
+  
+  
+      // Check if the person already has an event on the selected date
+      if (events.filter(event => event.person === personInput && event.date === date && event.type==="RTO").length > 0 && radioValue=="RTO") {
+        showAlert("This person already has an event on this day.", "danger");
+        return false
+      }
+  
+  
+      // Check if the person field is selected
+      if (personInput === "Choose Who...") {
+        showAlert("Please select a person.", "danger");
+        return false; // Prevent form submission
+      }
+      
+      // Check if the person has any RTO days left
+  
+      let auth = "{{request.user.is_authenticated}}"
+      if (auth === "False") {
+        let people = {{serialized_people | safe}};
+        let rtoDays = findRTOdaysByName(personInput, people);
+    
+        if ((radioValue==="RTO" || radioValue==="MTO") && rtoDays <= 0) {
+          let str = "${personInput} has no RTO days left.}"
+          showAlert(`${personInput} has no RTO days left.`, "danger");
+          return false;
+        }
+        
+        // Check if the person has more than 3 consecutive days already
+        const sortedEvents = sortEventsByDate(events);
+        if (checkConsecutiveDays(sortedEvents, date, personInput)) {
+          showAlert(`Please email managers in order to get more than 3 consecutive RTOs`, "danger");
+          return false;
+        }
+  
+        let currentDate = new Date();
+        let eventDate = new Date(date);
+        eventDate.setDate(eventDate.getDate() + 1);
+        currentDate.setHours(0, 0, 0, 0);
+        eventDate.setHours(0, 0, 0, 0); 
+    
+        if (eventDate < currentDate) {
+          showAlert("Please select a current or future date!", "danger")
+          return false;
+        }
+  
+        if (radioValue == "SWP") {
+          coverPerson = document.getElementById("shift-cover").value;
+          let people = {{serialized_people | safe}}
+          console.log(people.filter(person => person.fields.f_name === personInput)[0].fields.position)
+          console.log(people.filter(person => person.fields.f_name === coverPerson)[0].fields.position)
+          if (people.filter(person => person.fields.f_name === personInput)[0].fields.position != people.filter(person => person.fields.f_name === coverPerson)[0].fields.position && coverPerson != personInput) {
+            showAlert("Please select a person of the same position!", "danger")
+            return false;
+          }
+        }
+      }
+  
+
+
+
+      // If all validations pass, return true to allow form submission
+      return true;
+    }
+    
+    function showAlert(message, alertType) {
+      var alertDiv = document.createElement("div");
+  
+      alertDiv.classList.add("alert", "alert-dismissible", "alert-" + alertType);
+      
+      var closeButton = document.createElement("button");
+      closeButton.classList.add("btn-close");
+      closeButton.setAttribute("data-bs-dismiss", "alert");
+      
+      var strongTag = document.createElement("strong");
+      strongTag.textContent = "Oh snap! ";
+      
+      var alertLink = document.createElement("a");
+      alertLink.setAttribute("href", "#");
+      alertLink.classList.add("alert-link");
+      alertLink.textContent = message;
+      
+      alertDiv.appendChild(closeButton);
+      alertDiv.appendChild(strongTag);
+      alertDiv.appendChild(alertLink);
+      
+      var containerDiv = document.querySelector(".alerts"); // Change this to the appropriate container where you want the alert to appear
+      containerDiv.insertBefore(alertDiv, containerDiv.firstChild);
+    }
+  
+  
+    function filterEventsByDate(events, desiredDate) {
+      return events.filter(event => event.date === desiredDate);
+    }
+  
+  
+    function mobileDeleteClick(eventId) {
+      var deleteModal = new bootstrap.Modal(document.getElementById('edit_modal'));
+      document.getElementById('event-id').value = eventId;
+      deleteModal.show();          
+      const modalEditLabel = document.getElementById('myModalEditLabel');
+      const comment = document.getElementById('event-comment');
+      comment.style.fontSize = "2.5rem";
+      const events = {{events | safe}}
+      const info = events.find(event => event.id === eventId);
+      modalEditLabel.textContent =  `${info.title} ${info.date}`;
+      modalEditLabel.style.fontSize = "3rem";
+      comment.textContent = info.comment; 
+    }
+  
+  
+    function generateEventDetails(events, date) {
+      // Sort events array alphabetically based on the 'title' property
+      events.sort((a, b) => a.title.localeCompare(b.title));
+    
+      var containerDiv = document.querySelector("#eventCards");
+      containerDiv.innerHTML = ''; // Clear any existing content
+    
+      // Add the header element
+      var headerDiv = document.getElementById("eventCardsHeader");
+      headerDiv.textContent = "Events for " + date; // Assuming date is a valid date string or formatted as needed
+    
+      for (const event of events) {
+        var cardDiv = document.createElement("div");
+        cardDiv.classList.add("card");
+    
+        {% comment %} if (event.color == 'green') {
+          cardDiv.classList.add("bg-success");
+        }
+        else if (event.color == 'orange') {
+          cardDiv.classList.add("bg-warning");
+        }
+        else if (event.color == 'red') {
+          cardDiv.classList.add("bg-custom-red")
+        }
+        else if (event.type == 'SWP') {
+          cardDiv.classList.add("bg-custom-shift-cover")
+        }
+        else if (event.type == 'OTH') {
+          cardDiv.classList.add("bg-custom-oth")
+        }
+        else if (event.type == 'RTO') {
+          cardDiv.classList.add("bg-custom-rto");
+        }
+        else {
+          cardDiv.classList.add("bg-custom-gray");
+        } {% endcomment %}
+  
+  
+        cardDiv.style.backgroundColor = event.color;
+        cardDiv.style.color = event.text_color;
+  
+        if (event.type=="OTH") {
+          cardDiv.style.backgroundColor = "green";
+        }
+        else if (event.status == 'A') {
+          cardDiv.style.backgroundColor = "orange";
+        }
+        
+        cardDiv.style.color = "white";
+  
+  
+    
+        var cardHeaderDiv = document.createElement("div");
+        cardHeaderDiv.classList.add("card-header");
+        cardHeaderDiv.textContent = event.title;
+    
+        cardDiv.addEventListener('click', function () {
+          mobileDeleteClick(event.id);
+        });
+    
+        cardDiv.appendChild(cardHeaderDiv);
+        containerDiv.appendChild(cardDiv);
+      }
+    
+      var buttonContainer = document.createElement("div");
+      buttonContainer.classList.add("d-flex", "justify-content-center", "mt-5");
+    
+      var button = document.createElement("button");
+      button.classList.add("btn", "btn-light", "container-fluid", "btn");
+      button.setAttribute('data-bs-toggle', 'modal');
+      button.setAttribute('data-bs-target', '#create_modal');
+      button.textContent = 'Add a new one';
+      buttonContainer.appendChild(button);
+      containerDiv.appendChild(buttonContainer);
+    }
+  
+  
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendar');
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        customButtons: {
+          login_button: {
+            text: 'Admin Login',
+            click: function() {
+              window.location.href = '{% url 'scheduler:login_view' pk=boutique.id %}';
+            }
+          },
+          logout_button: {
+            text: 'Logout',
+            click: function() {
+              window.location.href = '{% url 'scheduler:logout_view' %}';
+            }
+          },
+          advanced_admin_button: {
+            text: 'Admin',
+            click: function() {
+              window.location.href = '{% url 'admin:index' %}';
+            }
+          },
+        },
+        events: {{events|safe}},
+        themeSystem: 'bootstrap5',
+        headerToolbar: {
+  
+          {% if user.is_authenticated %}
+          left: 'logout_button advanced_admin_button',
+          {% else %}
+          left: 'login_button',
+          {% endif %}
+  
+          center: 'title',
+          right: 'today prev,next'},
+  
+        dateClick: function(info) {
+          const prevHighlightedDate = document.querySelector('.highlighted-date');
+          const filteredEvents = filterEventsByDate({{events|safe}}, info.dateStr);
+  
+          if (prevHighlightedDate) {
+            prevHighlightedDate.classList.remove('highlighted-date');
+          }
+        
+          // Highlight the selected date
+          const selectedDateElement = info.dayEl;
+          console.log(selectedDateElement);
+          selectedDateElement.classList.add('highlighted-date');
+  
+          let counter = 0;
+          //
+          if ($(window).width() < 1200) {
+            generateEventDetails(filteredEvents, info.dateStr);        
+          }
+          else {
+            var createModal = new bootstrap.Modal(document.getElementById('create_modal'));
+            createModal.show(); 
+  
+          }
+          console.log(info.dayEl.dataset.date)
+          document.getElementById('date-input').value = info.dayEl.dataset.date;
+  
+          // Store the selected date range in hidden input field
+  
+          console.log('Selected date: ' + info.dateStr);
+        },
+        
+        eventClick: function(info) {
+          // Retrieve the event ID
+          var eventId = info.event.id;
+  
+  
+          if ($(window).width() < 1200) {
+            const filteredEvents = filterEventsByDate({{events|safe}}, info.event.start.toISOString().slice(0, 10));
+            filteredEvents[0].date
+            generateEventDetails(filteredEvents, filteredEvents[0].date);        
+          }
+          else {
+            var deleteModal = new bootstrap.Modal(document.getElementById('edit_modal'));
+            document.getElementById('event-id').value = eventId;
+            deleteModal.show();      
+            const modalEditLabel = document.getElementById('myModalEditLabel');
+            const comment = document.getElementById('event-comment');
+            modalEditLabel.textContent = `${info.event.title} ${info.event.start.toISOString().slice(0, 10)}`;
+            try {
+              comment.textContent = info.event.extendedProps.comment;
+            } catch (error) {
+            }
+          }
+          document.getElementById('date-input').value = info.event.start.toISOString().slice(0, 10);
+          document.getElementById('event-type').value = info.event.extendedProps.type;
+          console.log(document.getElementById('event-type').value)
+          
+        },
+      });
+      calendar.render();  
+  
+    });
+  
+    
+  </script>
+{% endblock javascript %}

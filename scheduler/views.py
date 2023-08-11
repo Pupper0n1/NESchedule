@@ -56,10 +56,10 @@ def index_view(request, pk):
             })
         elif i.type == "OTH" and request.user.is_superuser:
                 events_json.append({
-                "title": i.person.f_name,
+                "title":f'{i.person.f_name}\'s Message',
                 "type": i.type,
                 "date": i.date.strftime("%Y-%m-%d"),
-                "color": "#1d9978",
+                "color": "#7960db",
                 "text_color": "white",
                 "id": i.id,
                 "person": i.person.f_name,
@@ -77,7 +77,7 @@ def index_view(request, pk):
                 "title": f"{i.covering_person.f_name} Covered {i.original_person.f_name}",
                 "type": "SWP",
                 "date": i.date.strftime("%Y-%m-%d"),
-                "color": "purple",
+                "color": "#1d9978",
                 "text_color": "white",
                 "id": i.id,
             })
@@ -138,8 +138,6 @@ def create_event(request):
     events = Event.objects.filter(date=date)
     boutique = Boutique.objects.get(id=boutique_id)
 
-    if events.filter(person__f_name=person_name, type="RTO").exists(): # If the person already has an event on that day
-        return HttpResponseBadRequest("Person already has an event on that day")
     
     # Get the number of RTOs for that day and position
     total_rto_events = events.filter(type="RTO").count()
@@ -148,26 +146,37 @@ def create_event(request):
     ss_rto_events = events.filter(type="RTO", person__position="SS", boutique__id = boutique_id).count()
     mg_rto_events = events.filter(type="RTO", person__position="MG", boutique__id = boutique_id).count()
     
-    
-    MG_RTO_MAX = 1
-    TL_RTO_MAX = 1
-    CS_RTO_MAX_MON_THR = 2
-    CS_RTO_MAX_FRI_SUN = 1
-    SS_RTO_MAX = 1
+    test = boutique.MAX_RTO_CS_WEEKDAY
+    MG_RTO_MAX = boutique.MAX_RTO_MG
+    CS_RTO_MAX_MON_THR = boutique.MAX_RTO_CS_WEEKDAY
+    CS_RTO_MAX_FRI_SUN = boutique.MAX_RTO_CS_WEEKEND
+    SS_RTO_MAX_MON_THR = boutique.MAX_RTO_SS_WEEKDAY
+    SS_RTO_MAX_FRI_SUN = boutique.MAX_RTO_SS_WEEKEND
+    TL_RTO_MAX_MON_THR = boutique.MAX_RTO_TL_WEEKDAY
+    TL_RTO_MAX_FRI_SUN = boutique.MAX_RTO_TL_WEEKEND
+    MAX_RTO_MON_THR = boutique.MAX_RTO_WEEKDAY
+    MAX_RTO_FRI_SUN = boutique.MAX_RTO_WEEKEND
     # Check if the person has reached the maximum number of RTOs for that day and position
     if event_type == "RTO" or event_type == "MTO":
-        if total_rto_events > 3:
-            return HttpResponseBadRequest("Total RTO max reached")
-        if person.position == "TL" and tl_rto_events >= TL_RTO_MAX:
-            return HttpResponseBadRequest("TL RTO max reached")
-        elif person.position == "CS" and cs_rto_events >= CS_RTO_MAX_MON_THR and date.weekday() < 4:
-            return HttpResponseBadRequest("CS Monday to Thursday RTO max reached")
-        elif person.position == "CS" and cs_rto_events >= CS_RTO_MAX_FRI_SUN and date.weekday() > 3:
-            return HttpResponseBadRequest("CS Friday to Sunday RTO max reached")
-        elif person.position == "SS" and ss_rto_events >= SS_RTO_MAX:
-            return HttpResponseBadRequest("SS RTO max reached")
-        elif person.position == "MG" and mg_rto_events >= MG_RTO_MAX:
-            return HttpResponseBadRequest("MG RTO max reached")
+        if not request.user.is_superuser:
+            if total_rto_events > MAX_RTO_MON_THR and date.weekday() < 4:
+                return HttpResponseBadRequest("Total RTO max reached")
+            elif total_rto_events > MAX_RTO_FRI_SUN and date.weekday() > 3:
+                return HttpResponseBadRequest("Total RTO max reached")
+            if person.position == "TL" and tl_rto_events >= TL_RTO_MAX_MON_THR and date.weekday() < 4:
+                return HttpResponseBadRequest("TL RTO max reached")
+            elif person.position == "TL" and tl_rto_events >= TL_RTO_MAX_FRI_SUN and date.weekday() > 3:
+                return HttpResponseBadRequest("TL RTO max reached")
+            elif person.position == "CS" and cs_rto_events >= CS_RTO_MAX_MON_THR and date.weekday() < 4:
+                return HttpResponseBadRequest("CS Monday to Thursday RTO max reached")
+            elif person.position == "CS" and cs_rto_events >= CS_RTO_MAX_FRI_SUN and date.weekday() > 3:
+                return HttpResponseBadRequest("CS Friday to Sunday RTO max reached")
+            elif person.position == "SS" and ss_rto_events >= SS_RTO_MAX_MON_THR and date.weekday() < 4:
+                return HttpResponseBadRequest("CS Monday to Thursday RTO max reached")
+            elif person.position == "SS" and ss_rto_events >= SS_RTO_MAX_FRI_SUN and date.weekday() > 3:
+                return HttpResponseBadRequest("CS Friday to Sunday RTO max reached")
+            elif person.position == "MG" and mg_rto_events >= MG_RTO_MAX:
+                return HttpResponseBadRequest("MG RTO max reached")
         
         if event_type == "MTO":
             start_date_loop = request.POST.get('start-date')
