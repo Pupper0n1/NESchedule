@@ -212,8 +212,9 @@
     }
   
   
-    function mobileDeleteClick(eventId) {
+    function mobileDeleteClick(eventId, type) {
       var deleteModal = new bootstrap.Modal(document.getElementById('edit_modal'));
+      document.getElementById('event-type').value = type;
       document.getElementById('event-id').value = eventId;
       deleteModal.show();          
       const modalEditLabel = document.getElementById('myModalEditLabel');
@@ -284,7 +285,7 @@
         cardHeaderDiv.textContent = event.title;
     
         cardDiv.addEventListener('click', function () {
-          mobileDeleteClick(event.id);
+          mobileDeleteClick(event.id, event.type);
         });
     
         cardDiv.appendChild(cardHeaderDiv);
@@ -312,6 +313,7 @@
           login_button: {
             text: 'Admin Login',
             click: function() {
+              alert("Please login to access the admin page.");
               window.location.href = '{% url 'scheduler:login_view' pk=boutique.id %}';
             }
           },

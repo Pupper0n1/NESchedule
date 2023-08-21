@@ -1,0 +1,55 @@
+{% extends 'scheduler/base.html' %}
+{% block content %}
+
+
+
+<div class="container p-3">
+  <h1 class="display-1 text-center">{{boutique.name}} RTO settings</h1></div>
+
+<div class="container pt-5">
+    <table class="table table-striped">
+        <thead>
+          <tr class='table-primary'>
+            <th scope="col"></th>
+            <th scope="col">Weekday</th>
+            <th scope="col">Weekend</th>
+            <th scope="col">Special/Blackout</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Total</th>
+            <td>{{boutique.MAX_RTO_TOTAL_WEEKDAY}}</td>
+            <td>{{boutique.MAX_RTO_TOTAL_WEEKDAY}}</td>
+            <td>@</td>
+          </tr>
+          <tr>
+            <th scope="row">Manager</th>
+            <td>{{boutique.MAX_RTO_MG}}</td>
+            <td>{{boutique.MAX_RTO_MG}}</td>
+            <td>@</td>
+          </tr>
+          <tr>
+            <th scope="row">Team Lead</th>
+            <td>{{boutique.MAX_RTO_TL_WEEKDAY}}</td>
+            <td>{{boutique.MAX_RTO_TL_WEEKDAY}}</td>
+            <td>@</td>
+          </tr>
+          <tr>
+            <th scope="row">Coffee Specialist</th>
+            <td>{{boutique.MAX_RTO_CS_WEEKDAY}}</td>
+            <td>{{boutique.MAX_RTO_CS_WEEKEND}}</td>
+            <td>@</td>
+          </tr>
+          <tr>
+            <th scope="row">Stock Specialist</th>
+            <td>{{boutique.MAX_RTO_CS_WEEKDAY}}</td>
+            <td>{{boutique.MAX_RTO_CS_WEEKEND}}</td>
+            <td>@</td>
+          </tr>
+        </tbody>
+      </table>
+
+</div>
+
+{% endblock %}

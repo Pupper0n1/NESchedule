@@ -13,6 +13,7 @@ urlpatterns = [
     path('quick-reject/<int:pk>/', views.quick_reject, name='quick_reject'),
     path('login/<int:pk>', views.login_view, name='login_view'),
     path('logout/', views.logout_view, name='logout_view'),
+    path('rto_settings/<int:pk>/', views.rto_settings, name='rto_settings'),
 
     path('reset-password/', views.reset_password, name='reset_password'),
 

@@ -115,6 +115,10 @@ def approved_rto_event_creator(person, date, boutique, comment):
     person.save()
 
 
+def rto_settings(request, pk):
+    boutique = Boutique.objects.get(id=pk)
+    return render(request, 'scheduler/rto_settings.html', context={'boutique':boutique})
+
 
 def create_event(request):
     if request.method != 'POST':
@@ -135,7 +139,7 @@ def create_event(request):
 
 
     # Check if the person already has an event on that day
-    events = Event.objects.filter(date=date)
+    events = Event.objects.filter(date=date) 
     boutique = Boutique.objects.get(id=boutique_id)
 
     
@@ -146,7 +150,6 @@ def create_event(request):
     ss_rto_events = events.filter(type="RTO", person__position="SS", boutique__id = boutique_id).count()
     mg_rto_events = events.filter(type="RTO", person__position="MG", boutique__id = boutique_id).count()
     
-    test = boutique.MAX_RTO_CS_WEEKDAY
     MG_RTO_MAX = boutique.MAX_RTO_MG
     CS_RTO_MAX_MON_THR = boutique.MAX_RTO_CS_WEEKDAY
     CS_RTO_MAX_FRI_SUN = boutique.MAX_RTO_CS_WEEKEND
@@ -154,13 +157,14 @@ def create_event(request):
     SS_RTO_MAX_FRI_SUN = boutique.MAX_RTO_SS_WEEKEND
     TL_RTO_MAX_MON_THR = boutique.MAX_RTO_TL_WEEKDAY
     TL_RTO_MAX_FRI_SUN = boutique.MAX_RTO_TL_WEEKEND
-    MAX_RTO_MON_THR = boutique.MAX_RTO_WEEKDAY
-    MAX_RTO_FRI_SUN = boutique.MAX_RTO_WEEKEND
+    MAX_RTO_MON_THR = boutique.MAX_RTO_TOTAL_WEEKDAY
+    MAX_RTO_FRI_SUN = boutique.MAX_RTO_TOTAL_WEEKEND
+    settings = [MG_RTO_MAX, CS_RTO_MAX_MON_THR, CS_RTO_MAX_FRI_SUN, SS_RTO_MAX_MON_THR, SS_RTO_MAX_FRI_SUN, TL_RTO_MAX_MON_THR, TL_RTO_MAX_FRI_SUN, MAX_RTO_MON_THR, MAX_RTO_FRI_SUN]
     # Check if the person has reached the maximum number of RTOs for that day and position
     if event_type == "RTO" or event_type == "MTO":
         if not request.user.is_superuser:
             if total_rto_events > MAX_RTO_MON_THR and date.weekday() < 4:
-                return HttpResponseBadRequest("Total RTO max reached")
+                return redirect(reverse('scheduler:rto_settings', args=[boutique_id]))
             elif total_rto_events > MAX_RTO_FRI_SUN and date.weekday() > 3:
                 return HttpResponseBadRequest("Total RTO max reached")
             if person.position == "TL" and tl_rto_events >= TL_RTO_MAX_MON_THR and date.weekday() < 4:
@@ -240,7 +244,6 @@ def create_event(request):
     #     html_message=html_message,
     #     fail_silently=False,
     # )
-
     return redirect(reverse('scheduler:index', args=[boutique_id]))
 
 
@@ -281,6 +284,7 @@ def delete_event(request, pk):
 
 def set_event_status(request):
     if request.method == 'POST':
+        print(request.POST)
         typeOfEvent = request.POST.get('event_type')
         event_id = request.POST.get('event_id')
         status = request.POST.get('status')
