@@ -81,6 +81,7 @@ def index_view(request, pk):
                 "color": "#1d9978",
                 "text_color": "white",
                 "id": i.id,
+                "comment": i.comment
             })
 
 

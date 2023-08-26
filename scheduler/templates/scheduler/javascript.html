@@ -233,10 +233,10 @@
   
   
     function mobileDeleteClick(eventId, type) {
-      var deleteModal = new bootstrap.Modal(document.getElementById('edit_modal'));
+      var editModal = new bootstrap.Modal(document.getElementById('edit_modal'));
       document.getElementById('event-type').value = type;
       document.getElementById('event-id').value = eventId;
-      deleteModal.show();          
+      editModal.show();          
       const modalEditLabel = document.getElementById('myModalEditLabel');
       const comment = document.getElementById('event-comment');
       comment.style.fontSize = "2.5rem";
@@ -403,9 +403,9 @@
             generateEventDetails(filteredEvents, filteredEvents[0].date);        
           }
           else {
-            var deleteModal = new bootstrap.Modal(document.getElementById('edit_modal'));
+            var editModal = new bootstrap.Modal(document.getElementById('edit_modal'));
             document.getElementById('event-id').value = eventId;
-            deleteModal.show();      
+            editModal.show();      
             const modalEditLabel = document.getElementById('myModalEditLabel');
             const comment = document.getElementById('event-comment');
             modalEditLabel.textContent = `${info.event.title} ${info.event.start.toISOString().slice(0, 10)}`;
@@ -455,9 +455,6 @@
   
         var me = dayjs(blackOutDays[i].fields.start_date)
         console.log(blackOutDays[i].fields.start_date)
-  
-        console.log("START HERE")
-        console.log("HEWOOOOOEOWOEOWOEOEW")
   
         let currentDate = startDate;
   
