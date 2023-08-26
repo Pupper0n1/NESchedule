@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Event, Person, Boutique, ShiftCover
+from .models import Event, Person, Boutique, ShiftCover, BlackoutDays
 from django.contrib.admin import AdminSite
 from django.contrib.admin import SimpleListFilter
 
@@ -29,4 +29,5 @@ admin.site.register(Event, EventFilter)
 admin.site.register(Person, PersonFilter)
 admin.site.register(Boutique)
 admin.site.register(ShiftCover)
+admin.site.register(BlackoutDays)
 

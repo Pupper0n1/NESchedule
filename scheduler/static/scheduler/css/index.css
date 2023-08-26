@@ -286,7 +286,10 @@ margin: 0 auto;
 
 
   .highlighted-date {
-    background-color: #D1E5F2; /* Change this to any desired highlight color */
+    background-color: #D1E5F2; 
   }
 
 
+  .blackout-date {
+    background-color: #abc2d1 !important;
+  }

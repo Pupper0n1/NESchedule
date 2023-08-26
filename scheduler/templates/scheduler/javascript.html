@@ -92,7 +92,6 @@
       const after2 =  incrementDate(date, 2)
       const after3 = incrementDate(date, 3) 
       
-      console.log(before1)
       
       if ((doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, before2)) && doesEventExist(filteredEvents, before3) ||
           (doesEventExist(filteredEvents, before1) && doesEventExist(filteredEvents, before2)) && doesEventExist(filteredEvents, after1) ||
@@ -104,6 +103,21 @@
       return false;
     }
   
+
+
+    function isDateInRange(startDateStr, endDateStr, inputDateStr) {
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr);
+      const inputDate = new Date(inputDateStr);
+
+      if (inputDate < startDate || inputDate > endDate) {
+        return false;
+      }
+
+      return true;
+    }
+      
+
     function validateForm() {
       let personInput = document.getElementById("input-group-select").value;
       let events = {{events | safe}};
@@ -111,11 +125,9 @@
       let date = document.getElementById("date-input").value;
       let radioValue = document.querySelector('input[name="options-outlined"]:checked').value;
       let person = people.filter(person => person.fields.f_name === personInput)[0];
-      // parseInt("{{boutique.MAX_RTO_CS_WEEKDAY}}")
-      let dateValue = new Date(date);
-      dateValue.setDate(dateValue.getDate() + 1);
-      console.log(dateValue)
-  
+
+
+
   
   
       // Check if the person already has an event on the selected date
@@ -130,12 +142,20 @@
         showAlert("Please select a person.", "danger");
         return false; // Prevent form submission
       }
-      
+       
       // Check if the person has any RTO days left
   
       let auth = "{{request.user.is_authenticated}}"
       if (auth === "False") {
-        let people = {{serialized_people | safe}};
+        // Check if the date is in a blackout period
+        let blackOutDays = {{blackoutDays | safe}};
+        for (let i = 0; i < blackOutDays.length; i++) {
+          console.log(blackOutDays[i].fields.start_date)
+          if (isDateInRange(blackOutDays[i].fields.start_date, blackOutDays[i].fields.end_date, date)) {
+            showAlert("This is in the blackout period.", "danger");
+            return false;
+          }
+        }
         let rtoDays = findRTOdaysByName(personInput, people);
     
         if ((radioValue==="RTO" || radioValue==="MTO") && rtoDays <= 0) {
@@ -165,8 +185,8 @@
         if (radioValue == "SWP") {
           coverPerson = document.getElementById("shift-cover").value;
           let people = {{serialized_people | safe}}
-          console.log(people.filter(person => person.fields.f_name === personInput)[0].fields.position)
-          console.log(people.filter(person => person.fields.f_name === coverPerson)[0].fields.position)
+          // console.log(people.filter(person => person.fields.f_name === personInput)[0].fields.position)
+          // console.log(people.filter(person => person.fields.f_name === coverPerson)[0].fields.position)
           if (people.filter(person => person.fields.f_name === personInput)[0].fields.position != people.filter(person => person.fields.f_name === coverPerson)[0].fields.position && coverPerson != personInput) {
             showAlert("Please select a person of the same position!", "danger")
             return false;
@@ -305,7 +325,7 @@
     }
   
   
-    
+    // Calendar creation
     document.addEventListener('DOMContentLoaded', function() {
       var calendarEl = document.getElementById('calendar');
       var calendar = new FullCalendar.Calendar(calendarEl, {
@@ -313,7 +333,6 @@
           login_button: {
             text: 'Admin Login',
             click: function() {
-              alert("Please login to access the admin page.");
               window.location.href = '{% url 'scheduler:login_view' pk=boutique.id %}';
             }
           },
@@ -330,7 +349,9 @@
             }
           },
         },
-        events: {{events|safe}},
+        eventSources: [
+        {{events|safe}}
+        ],
         themeSystem: 'bootstrap5',
         headerToolbar: {
   
@@ -353,11 +374,9 @@
         
           // Highlight the selected date
           const selectedDateElement = info.dayEl;
-          console.log(selectedDateElement);
           selectedDateElement.classList.add('highlighted-date');
   
           let counter = 0;
-          //
           if ($(window).width() < 1200) {
             generateEventDetails(filteredEvents, info.dateStr);        
           }
@@ -366,10 +385,9 @@
             createModal.show(); 
   
           }
-          console.log(info.dayEl.dataset.date)
+          // Store the selected date range in hidden input field
           document.getElementById('date-input').value = info.dayEl.dataset.date;
   
-          // Store the selected date range in hidden input field
   
           console.log('Selected date: ' + info.dateStr);
         },
@@ -398,7 +416,7 @@
           }
           document.getElementById('date-input').value = info.event.start.toISOString().slice(0, 10);
           document.getElementById('event-type').value = info.event.extendedProps.type;
-          console.log(document.getElementById('event-type').value)
+          // console.log(document.getElementById('event-type').value)
           
         },
       });
@@ -406,6 +424,73 @@
   
     });
   
+
+
+    function iterateAndPrintDates(startDateStr, endDateStr) {
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr);
     
+      if (startDate > endDate) {
+        console.log("Start date is after the end date.");
+        return;
+      }
+    
+      let currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        const currentDateStr = currentDate.toISOString().slice(0, 10);
+        console.log(currentDateStr);
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    }
+
+
+    // WIP
+
+    document.addEventListener("DOMContentLoaded", function() {
+      let blackOutDays = {{blackoutDays | safe}};
+      for (let i = 0; i < blackOutDays.length; i++) {
+  
+        const startDate = dayjs(blackOutDays[i].fields.start_date)
+        const endDate = dayjs(blackOutDays[i].fields.end_date);
+  
+        var me = dayjs(blackOutDays[i].fields.start_date)
+        console.log(blackOutDays[i].fields.start_date)
+  
+        console.log("START HERE")
+        console.log("HEWOOOOOEOWOEOWOEOEW")
+  
+        let currentDate = startDate;
+  
+        if (startDate.isBefore(endDate)) {
+          while (currentDate.isSameOrBefore(endDate)) {
+
+            if (!currentDate.isSame(dayjs().format("YYYY-MM-DD"))) {
+              // document.querySelector(`data-date=`${currentDate.format("YYYY-MM-DD")}``).classList.add("blackout-date")
+    
+    
+              //document.querySelector("data-date="2023-08-23"").classList.add("blackout-date")
+    
+              document.querySelector(`[data-date="${currentDate.format("YYYY-MM-DD")}"]`).classList.add('blackout-date');
+    
+              console.log(currentDate.format('YYYY-MM-DD'))
+              
+            }
+            currentDate = currentDate.add(1, 'day');
+
+          }
+
+        }
+      }
+  });
+
+    
+
+
+    // WIP
+    
+
+
+
+
   </script>
 {% endblock javascript %}

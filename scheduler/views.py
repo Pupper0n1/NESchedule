@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .models import Event, Person, Boutique, ShiftCover
+from .models import Event, Person, Boutique, ShiftCover, BlackoutDays
 from django.shortcuts import redirect
 from django.urls import reverse
 from datetime import datetime, timedelta
@@ -52,7 +52,8 @@ def index_view(request, pk):
                 "id": i.id,
                 "person": i.person.f_name,
                 "comment": i.comment,
-                "position": i.person.position
+                "position": i.person.position,
+                "backgroundColor ": "orange",
             })
         elif i.type == "OTH" and request.user.is_superuser:
                 events_json.append({
@@ -87,8 +88,8 @@ def index_view(request, pk):
     serialized_people = serializers.serialize('json', Person.objects.all().order_by('f_name'))
     people = Person.objects.all().filter(boutique__id = pk).order_by('f_name')
     boutique = Boutique.objects.get(id=pk)
-
-    context = {"people" : people, "events": events_json, "serialized_people":serialized_people, "boutique":boutique}
+    blackouts = serializers.serialize('json', BlackoutDays.objects.all().filter(boutique__id=pk))
+    context = {"people" : people, "events": events_json, "serialized_people":serialized_people, "boutique":boutique, "blackoutDays":blackouts}
 
     return render(request, "scheduler/index.html", context)
     # return HttpResponse("Hello, world. You're at the scheduler index.")
@@ -396,3 +397,7 @@ def reset_password_and_redirect(request):
         user.set_password(new_password)
         user.save()
         return redirect(reverse('scheduler:login_view'))
+    
+
+def about(request):
+    return render(request, 'scheduler/about.html')

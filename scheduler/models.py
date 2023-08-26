@@ -99,3 +99,14 @@ class Boutique(models.Model):
 
     def __str__(self):
         return f"{self.name} in {self.city}, {self.province}"
+    
+
+class BlackoutDays(models.Model):
+    boutique = models.ForeignKey('Boutique', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    comment = models.TextField(null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Blackout Days"

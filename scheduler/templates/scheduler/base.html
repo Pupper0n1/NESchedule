@@ -23,6 +23,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/clockpicker/0.0.7/bootstrap-clockpicker.min.js"></script>
 
     
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isSameOrBefore.js"></script>
+    <script>dayjs.extend(window.dayjs_plugin_isSameOrBefore)</script>
+    
+    <link rel="icon" type="image/x-icon" href="{% static 'scheduler/img/favicon.png' %}">
   </head>
   <body>
 
@@ -33,7 +38,7 @@
     {% block content %}{% endblock content %}
 
 
-
+  
 
 
   </body>
