@@ -6,6 +6,8 @@ from django.urls import reverse
 from datetime import datetime, timedelta
 from django.http import HttpResponseBadRequest
 from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -183,6 +185,9 @@ def create_event(request):
                 return HttpResponseBadRequest("CS Friday to Sunday RTO max reached")
             elif person.position == "MG" and mg_rto_events >= MG_RTO_MAX:
                 return HttpResponseBadRequest("MG RTO max reached")
+            
+
+
         
         if event_type == "MTO":
             start_date_loop = request.POST.get('start-date')
@@ -193,7 +198,29 @@ def create_event(request):
                 approved_rto_event_creator(person, date, boutique, comment)
 
         else:
-            Event.objects.create(person=person, type="RTO", date=date, status="P", boutique=boutique, comment=comment)
+            obj = Event.objects.create(person=person, type="RTO", date=date, status="P", boutique=boutique, comment=comment)
+
+            # EMAIL STUFF
+            subject = 'Event submitted!'
+            # html_message = render_to_string('../templates/scheduler/request_email.html', context)
+            # plain_message = strip_tags(html_message)
+            from_email = 'settings.EMAIL_HOST_USER'
+            message =  f"""{event_type} request by {person_name} for {date} has been submitted and is pending approval.\n\n
+Click here to see the request: http://pupper1n0.pythonanywhere.com/scheduler/ \n\n
+Otherwise, click here to quick approve http://pupper1n0.pythonanywhere.com/quick-approve/{obj.pk}\n
+TEMP: http://127.0.0.1:8000/quick-approve/{obj.pk}\n\n
+Thank you,\nScheduler"""
+            to_email = ['elbouni.wassem@gmail.com']     # Will be changed to the email of the person in charge of approving events
+            send_mail(
+                subject,
+                message,
+                from_email,
+                to_email,
+                # html_message=html_message,
+                fail_silently=False,
+            )
+            # EMAIL STUFF
+
         context = {
             "person": person_name,
             "event_type": event_type,
@@ -204,9 +231,9 @@ def create_event(request):
             covering_person = Person.objects.get(f_name=request.POST.get('shift-covering-person'))
         except Person.DoesNotExist:
             return redirect(reverse('scheduler:index', args=[boutique_id]))
-        ShiftCover.objects.create(original_person=person, covering_person=covering_person, date=date, boutique=boutique, comment=comment)
+        obj = ShiftCover.objects.create(original_person=person, covering_person=covering_person, date=date, boutique=boutique, comment=comment)
     elif event_type == "OTH":
-        Event.objects.create(person=person, type="OTH", date=date, status="O", boutique=boutique, comment=comment)
+        obj = Event.objects.create(person=person, type="OTH", date=date, status="O", boutique=boutique, comment=comment)
 
     # # Email stuff DO NOT ENABLE UNTIL PERMISSION IS GRANTED BY STAFF MEMBERS
     # subject = 'Event Needs Approval'
@@ -228,24 +255,7 @@ def create_event(request):
     #     fail_silently=False,
     # )
 
-    # subject = 'Event submitted!'
-    # html_message = render_to_string('../templates/scheduler/request_email.html', context)
-    # plain_message = strip_tags(html_message)
-    # from_email = 'settings.EMAIL_HOST_USER'
-    # # message =  f"""<strong>{event_type}</strong> request by <strong>{person_name}</strong> for <strong>{date_start}</strong> has been submitted and is pending approval.\n\n
-    # # click here to see the request: http://pupper1n0.pythonanywhere.com/scheduler/ \n\n
-    # # Otherwise, click here to quick approve http://pupper1n0.pythonanywhere.com/quick-approve/{obj.pk}\n
-    # # TEMP: http://127.0.0.1:8000/quick-approve/{obj.pk}\n\n
-    # # Thank you,\nScheduler"""
-    # to_email = ['elbouni.wassem@gmail.com']     # Will be changed to the email of the person in charge of approving events
-    # send_mail(
-    #     subject,
-    #     plain_message,
-    #     from_email,
-    #     to_email,
-    #     html_message=html_message,
-    #     fail_silently=False,
-    # )
+
     return redirect(reverse('scheduler:index', args=[boutique_id]))
 
 
@@ -264,8 +274,8 @@ def quick_approve(request, pk):
             person.save()
         event.status = "A"
         event.save()
-    else:
-        return redirect(reverse('scheduler:index', args=[event.boutique.id])) 
+
+    return redirect(reverse('scheduler:index', args=[event.boutique.id])) 
 
 
 def quick_reject(request, pk):
