@@ -261,6 +261,7 @@ Thank you,\nScheduler"""
 
 def quick_approve(request, pk):
     event = Event.objects.get(id=pk)
+    # print("Test coce")
     # event.status = "A"
     # event.save()
     # return redirect(reverse('scheduler:index'))
