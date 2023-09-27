@@ -1,2 +1,1 @@
-release: python manage.py migrate
-web: gunicorn neschedule.wsgi 
+web: gunicorn NESchedule.wsgi --log-file -
