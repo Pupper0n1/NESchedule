@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +26,7 @@ SECRET_KEY = 'django-insecure-rkl3e2*mo8j#1#)60dggq9uogw99*iex22#vj5811t=2ny5ifb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['pupper1n0.pythonanywhere.com', '10.0.0.62', 'http://neschedule.com']
+ALLOWED_HOSTS = ['pupper1n0.pythonanywhere.com', '10.0.0.62', 'http://neschedule.com', 'https://neschedule-afffe19c5e5b.herokuapp.com/', '127.0.0.1']
 
 
 # Application definition
@@ -39,8 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'scheduler',
-    # Use WhiteNoise's runserver implementation instead of the Django default, for dev-prod parity.
-    "whitenoise.runserver_nostatic",
+    # # Use WhiteNoise's runserver implementation instead of the Django default, for dev-prod parity.
+    # "whitenoise.runserver_nostatic",
 ]
 
 MIDDLEWARE = [
@@ -141,7 +142,7 @@ EMAIL_USE_TLS = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
