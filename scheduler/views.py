@@ -211,11 +211,12 @@ def create_event(request):
             # html_message = render_to_string('../templates/scheduler/request_email.html', context)
             # plain_message = strip_tags(html_message)
             from_email = 'settings.EMAIL_HOST_USER'
-            message =  f"""{event_type} request by {person_name} for {date.date} has been submitted and is pending approval.\n\n
-Click here to see the request: http://pupper1n0.pythonanywhere.com/scheduler/ \n\n
-Otherwise, click here to quick approve http://pupper1n0.pythonanywhere.com/quick-approve/{obj.pk}\n
+            message =  f"""{event_type} request by {person_name} for {date} has been submitted and is pending approval.\n\n
+Click here to see the request: http://neschedule.works/scheduler/ \n\n
+Otherwise, click here to quick approve http://neschedule.works/quick-approve/{obj.pk}\n
 Thank you\nNESchedule"""
-            to_email = managers    
+            # to_email = managers   
+            to_email = ["elbouni.wassem@gmail.com"] 
             send_mail(
                 subject,
                 message,
@@ -340,10 +341,10 @@ def set_event_status(request):
                             # plain_message = strip_tags(html_message)
                             from_email = 'settings.EMAIL_HOST_USER'
                             message =  f"""RTO request by {person.f_name} for {event.date} has been approved\n\n
-                            Click here to see: http://pupper1n0.pythonanywhere.com/scheduler/ \n\n
+                            Click here to see: http://neschedule.works/scheduler/ \n\n
                             Enjoy your day off!\n\n
                             Thank you,\nNESchedule"""
-                            to_email = person.email    
+                            to_email = [person.email]  
                             send_mail(
                                 subject,
                                 message,
