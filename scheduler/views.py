@@ -240,28 +240,6 @@ Thank you\nNESchedule"""
         obj = ShiftCover.objects.create(original_person=person, covering_person=covering_person, date=date, boutique=boutique, comment=comment)
     elif event_type == "OTH":
         obj = Event.objects.create(person=person, type="OTH", date=date, status="O", boutique=boutique, comment=comment)
-
-    # # Email stuff DO NOT ENABLE UNTIL PERMISSION IS GRANTED BY STAFF MEMBERS
-    # subject = 'Event Needs Approval'
-    # html_message = render_to_string('../templates/scheduler/request_email.html', context)
-    # plain_message = strip_tags(html_message)
-    # from_email = 'settings.EMAIL_HOST_USER'
-    # # message =  f"""<strong>{event_type}</strong> request by <strong>{person_name}</strong> for <strong>{date_start}</strong> has been submitted and is pending approval.\n\n
-    # # click here to see the request: http://pupper1n0.pythonanywhere.com/scheduler/ \n\n
-    # # Otherwise, click here to quick approve http://pupper1n0.pythonanywhere.com/quick-approve/{obj.pk}\n
-    # # TEMP: http://127.0.0.1:8000/quick-approve/{obj.pk}\n\n
-    # # Thank you,\nScheduler"""
-    # to_email = ['elbouni.wassem@gmail.com']     # Will be changed to the email of the person in charge of approving events
-    # send_mail(
-    #     subject,
-    #     plain_message,
-    #     from_email,
-    #     to_email,
-    #     html_message=html_message,
-    #     fail_silently=False,
-    # )
-
-
     return redirect(reverse('scheduler:index', args=[boutique_id]))
 
 
@@ -341,9 +319,9 @@ def set_event_status(request):
                             # plain_message = strip_tags(html_message)
                             from_email = 'settings.EMAIL_HOST_USER'
                             message =  f"""RTO request by {person.f_name} for {event.date} has been approved\n\n
-                            Click here to see: http://neschedule.works/scheduler/ \n\n
-                            Enjoy your day off!\n\n
-                            Thank you,\nNESchedule"""
+Click here to see: http://neschedule.works/scheduler/ \n\n
+Enjoy your day off!\n\n
+NESchedule"""
                             to_email = [person.email]  
                             send_mail(
                                 subject,
