@@ -145,6 +145,10 @@ def create_event(request):
     # Check if the person already has an event on that day
     events = Event.objects.filter(date=date) 
     boutique = Boutique.objects.get(id=boutique_id)
+    managers = []
+
+    for manager in Person.objects.filter(boutique=boutique):
+        managers.append(manager.email)
 
     
     # Get the number of RTOs for that day and position
@@ -200,17 +204,18 @@ def create_event(request):
         else:
             obj = Event.objects.create(person=person, type="RTO", date=date, status="P", boutique=boutique, comment=comment)
 
+
+
             # EMAIL STUFF
             subject = 'Event submitted!'
             # html_message = render_to_string('../templates/scheduler/request_email.html', context)
             # plain_message = strip_tags(html_message)
             from_email = 'settings.EMAIL_HOST_USER'
-            message =  f"""{event_type} request by {person_name} for {date} has been submitted and is pending approval.\n\n
+            message =  f"""{event_type} request by {person_name} for {date.date} has been submitted and is pending approval.\n\n
 Click here to see the request: http://pupper1n0.pythonanywhere.com/scheduler/ \n\n
 Otherwise, click here to quick approve http://pupper1n0.pythonanywhere.com/quick-approve/{obj.pk}\n
-TEMP: http://127.0.0.1:8000/quick-approve/{obj.pk}\n\n
-Thank you,\nScheduler"""
-            to_email = ['elbouni.wassem@gmail.com']     # Will be changed to the email of the person in charge of approving events
+Thank you\nNESchedule"""
+            to_email = managers    
             send_mail(
                 subject,
                 message,
@@ -295,13 +300,14 @@ def delete_event(request, pk):
         return redirect(reverse('scheduler:index', args=[event.boutique.id]))
 
 
+
+
+
 def set_event_status(request):
     if request.method == 'POST':
-        print(request.POST)
         typeOfEvent = request.POST.get('event_type')
         event_id = request.POST.get('event_id')
         status = request.POST.get('status')
-        print(typeOfEvent)
 
         if not request.user.is_superuser:
             if typeOfEvent == "RTO":
@@ -314,7 +320,6 @@ def set_event_status(request):
                 return HttpResponseBadRequest("You do not have permission to do this")
 
         else:
-
             if typeOfEvent == "SWP":
                 shiftCover = ShiftCover.objects.get(id=request.POST.get('event_id'))
                 shiftCover.delete()
@@ -328,6 +333,27 @@ def set_event_status(request):
                             person = Person.objects.get(id=event.person.id)
                             person.RTO_days = person.RTO_days - 1
                             person.save()
+                            #
+                            # EMAIL STUFF
+                            subject = 'Event submitted!'
+                            # html_message = render_to_string('../templates/scheduler/request_email.html', context)
+                            # plain_message = strip_tags(html_message)
+                            from_email = 'settings.EMAIL_HOST_USER'
+                            message =  f"""RTO request by {person.f_name} for {event.date} has been approved\n\n
+                            Click here to see: http://pupper1n0.pythonanywhere.com/scheduler/ \n\n
+                            Enjoy your day off!\n\n
+                            Thank you,\nNESchedule"""
+                            to_email = person.email    
+                            send_mail(
+                                subject,
+                                message,
+                                from_email,
+                                to_email,
+                                # html_message=html_message,
+                                fail_silently=False,
+                            )
+                            # EMAIL STUFF
+                            #
                         event.status = "A"
                         event.save()
                     elif status == 'R':
