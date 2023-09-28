@@ -227,6 +227,10 @@ margin: 0 auto;
       font-size: 3rem;
     }
 
+    #myModalEditLabel, #myModalDeleteLabel {
+      font-size: 3rem;
+    }
+
     .margin-top-5 {
       margin-top: 50px;
     }
