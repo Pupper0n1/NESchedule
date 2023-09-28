@@ -212,7 +212,7 @@ def create_event(request):
             # plain_message = strip_tags(html_message)
             from_email = 'settings.EMAIL_HOST_USER'
             message =  f"""{event_type} request by {person_name} for {date} has been submitted and is pending approval.\n\n
-Click here to see the request: http://neschedule.works/scheduler/ \n\n
+Click here to see the request: http://neschedule.works/schedule/ \n\n
 Otherwise, click here to quick approve http://neschedule.works/quick-approve/{obj.pk}\n
 Thank you\nNESchedule"""
             # to_email = managers   
@@ -319,7 +319,7 @@ def set_event_status(request):
                             # plain_message = strip_tags(html_message)
                             from_email = 'settings.EMAIL_HOST_USER'
                             message =  f"""RTO request by {person.f_name} for {event.date} has been approved\n\n
-Click here to see: http://neschedule.works/scheduler/ \n\n
+Click here to see: http://neschedule.works/schedule/ \n\n
 Enjoy your day off!\n\n
 NESchedule"""
                             to_email = [person.email]  
