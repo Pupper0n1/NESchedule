@@ -276,7 +276,7 @@ def validated(request, id):
     managers = []
 
     for manager in Person.objects.filter(boutique=obj.boutique.id):
-        managers.append(manager.email)
+        # managers.append(manager.email)
 
     # EMAIL STUFF
     subject = f'{obj.person.f_name} is requesting an event!'
@@ -287,7 +287,7 @@ def validated(request, id):
 Click here to view: http://neschedule.works/schedule/scheduler/1 \n\n
 Thank you\nNESchedule"""
     # to_email = managers   
-    to_email = [managers] 
+    to_email = ['elbouni.wassem@gmail.com'] 
     send_mail(
         subject,
         message,
