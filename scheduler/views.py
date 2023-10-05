@@ -275,8 +275,9 @@ def validated(request, id):
 
     managers = []
 
-    for manager in Person.objects.filter(boutique=obj.boutique.id):
-        managers.append(manager.email)
+
+    for manager in Boutique.objects.filter(id=obj.id):
+        managers.append(manager.manager)
 
     # EMAIL STUFF
     subject = f'{obj.person.f_name} is requesting an event!'
@@ -284,7 +285,7 @@ def validated(request, id):
     # plain_message = strip_tags(html_message)
     from_email = 'settings.EMAIL_HOST_USER'
     message =  f"""{obj.type} request by {obj.person.f_name} for {obj.date.strftime('%b %d, %Y')} has been requested.\n\n
-Click here to view: http://neschedule.works/schedule/scheduler/1 \n\n
+Click here to view: http://neschedule.works/schedule/1 \n\n
 Thank you\nNESchedule"""
     # to_email = managers   
     to_email = ['elbouni.wassem@gmail.com'] 
