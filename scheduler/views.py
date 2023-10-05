@@ -13,7 +13,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 import random
 import string
-
+from django.db.models import Q
 from django.core import serializers
 
 # Maximum number of rtos per day by position and date
@@ -43,7 +43,7 @@ def index_view(request, pk):
     events_json = []
 
     for i in events:
-        if i.type == "RTO":
+        if i.type == "RTO" and i.status != "H":
             events_json.append({
                 "title": i.person.f_name + " RTO",
                 "type": i.type,
@@ -96,6 +96,9 @@ def index_view(request, pk):
 
     return render(request, "scheduler/index.html", context)
     # return HttpResponse("Hello, world. You're at the scheduler index.")
+
+
+
 
 
 
@@ -152,11 +155,36 @@ def create_event(request):
 
     
     # Get the number of RTOs for that day and position
-    total_rto_events = events.filter(type="RTO").count()
-    tl_rto_events = events.filter(type="RTO", person__position="TL", boutique__id = boutique_id).count()
-    cs_rto_events = events.filter(type="RTO", person__position="CS", boutique__id = boutique_id).count()
-    ss_rto_events = events.filter(type="RTO", person__position="SS", boutique__id = boutique_id).count()
-    mg_rto_events = events.filter(type="RTO", person__position="MG", boutique__id = boutique_id).count()
+    total_rto_events = events.filter(
+        Q(type="RTO") &
+        (Q(status="P") | Q(status="A"))
+    ).count()
+    tl_rto_events = events.filter(
+        Q(type="RTO") &
+        (Q(status="P") | Q(status="A")) &
+        Q(person__position="TL") &
+        Q(boutique__id=boutique_id)
+    ).count()
+    cs_rto_events = events.filter(
+        Q(type="RTO") &
+        (Q(status="P") | Q(status="A")) &
+        Q(person__position="CS") &
+        Q(boutique__id=boutique_id)
+    ).count()
+
+    ss_rto_events = events.filter(
+        Q(type="RTO") &
+        (Q(status="P") | Q(status="A")) &
+        Q(person__position="SS") &
+        Q(boutique__id=boutique_id)
+    ).count()
+
+    mg_rto_events = events.filter(
+        Q(type="RTO") &
+        (Q(status="P") | Q(status="A")) &
+        Q(person__position="MG") &
+        Q(boutique__id=boutique_id)
+    ).count()
     
     MG_RTO_MAX = boutique.MAX_RTO_MG
     CS_RTO_MAX_MON_THR = boutique.MAX_RTO_CS_WEEKDAY
@@ -191,8 +219,6 @@ def create_event(request):
                 return HttpResponseBadRequest("MG RTO max reached")
             
 
-
-        
         if event_type == "MTO":
             start_date_loop = request.POST.get('start-date')
             end_date_loop = request.POST.get('end-date')
@@ -200,38 +226,37 @@ def create_event(request):
 
             for date in difference_in_days:
                 approved_rto_event_creator(person, date, boutique, comment)
-
-        else:
+        elif request.user.is_superuser:
             obj = Event.objects.create(person=person, type="RTO", date=date, status="P", boutique=boutique, comment=comment)
 
-
-
+        else:
+            obj = Event.objects.create(person=person, type="RTO", date=date, status="H", boutique=boutique, comment=comment)
+            try:
+                # EMAIL STUFF
+                subject = 'Event requested!'
+                # html_message = render_to_string('../templates/scheduler/request_email.html', context)
+                # plain_message = strip_tags(html_message)
+                from_email = 'settings.EMAIL_HOST_USER'
+                message =  f"""{event_type} request by you for {date.strftime('%b %d, %Y')} has been requested. Please confirm using the link below\n\n
+    Click here to confirm the request: http://neschedule.works/validated/{obj.id} \n\n
+    If you did not make this request, please ignore this email\n
+    Thank you\nNESchedule"""
+                # to_email = managers   
+                to_email = [person.email] 
+                send_mail(
+                    subject,
+                    message,
+                    from_email,
+                    to_email,
+                    # html_message=html_message,
+                    fail_silently=False,
+                )
+                return render(request, 'scheduler/event_validated.html')
+            except:
+                return redirect(reverse('scheduler:index', args=[boutique_id]))
             # EMAIL STUFF
-            subject = 'Event submitted!'
-            # html_message = render_to_string('../templates/scheduler/request_email.html', context)
-            # plain_message = strip_tags(html_message)
-            from_email = 'settings.EMAIL_HOST_USER'
-            message =  f"""{event_type} request by {person_name} for {date} has been submitted and is pending approval.\n\n
-Click here to see the request: http://neschedule.works/schedule/{boutique_id} \n\n
-Otherwise, click here to quick approve http://neschedule.works/quick-approve/{obj.pk}\n
-Thank you\nNESchedule"""
-            # to_email = managers   
-            to_email = ["elbouni.wassem@gmail.com"] 
-            send_mail(
-                subject,
-                message,
-                from_email,
-                to_email,
-                # html_message=html_message,
-                fail_silently=False,
-            )
-            # EMAIL STUFF
 
-        context = {
-            "person": person_name,
-            "event_type": event_type,
-            "date": date,
-        }
+
     elif event_type == "SWP":
         try:
             covering_person = Person.objects.get(f_name=request.POST.get('shift-covering-person'))
@@ -243,12 +268,40 @@ Thank you\nNESchedule"""
     return redirect(reverse('scheduler:index', args=[boutique_id]))
 
 
+def validated(request, id):
+    obj = Event.objects.get(id=id)
+    obj.status = "P"
+    obj.save()
+
+    managers = []
+
+    for manager in Person.objects.filter(boutique=obj.boutique.id):
+        managers.append(manager.email)
+
+    # EMAIL STUFF
+    subject = f'{obj.person.f_name} is requesting an event!'
+    # html_message = render_to_string('../templates/scheduler/request_email.html', context)
+    # plain_message = strip_tags(html_message)
+    from_email = 'settings.EMAIL_HOST_USER'
+    message =  f"""{obj.type} request by {obj.person.f_name} for {obj.date.strftime('%b %d, %Y')} has been requested.\n\n
+Click here to view: http://neschedule.works/schedule/scheduler/1 \n\n
+Thank you\nNESchedule"""
+    # to_email = managers   
+    to_email = [managers] 
+    send_mail(
+        subject,
+        message,
+        from_email,
+        to_email,
+        # html_message=html_message,
+        fail_silently=False,
+    )
+    # EMAIL STUFF
+    return redirect(reverse('scheduler:index', args=[obj.boutique.id]))
+
+
 def quick_approve(request, pk):
     event = Event.objects.get(id=pk)
-    # print("Test coce")
-    # event.status = "A"
-    # event.save()
-    # return redirect(reverse('scheduler:index'))
 
     if event.status != "A":
         if event.type == "RTO":

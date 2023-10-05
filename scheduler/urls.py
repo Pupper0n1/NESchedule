@@ -23,6 +23,7 @@ urlpatterns = [
     path('reset-password-form/<int:pk>/<str:passwd>/', views.new_password_form, name='reset_password_form'),
 
     path('new_password_and_redirect/', views.reset_password_and_redirect, name='new_password_and_redirect'),
+    path('validated/<int:id>/', views.validated, name='validated'),
 
     path('', views.redirect_index, name='redirect_index')       # This is a redirect to the index page
 ]

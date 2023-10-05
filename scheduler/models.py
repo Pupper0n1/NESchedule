@@ -14,7 +14,8 @@ class Event(models.Model):
         ("P", "Pending"),
         ("A", "Approved"),
         ("D", "Denied"),
-        ("O", "Other")
+        ("O", "Other"),
+        ("H", "Hidden")
     ]
     person = models.ForeignKey('Person', on_delete=models.SET_NULL, null=True)
     type = models.CharField(max_length=3, choices=EVENT_CHOICES)

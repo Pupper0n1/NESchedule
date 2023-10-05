@@ -1,0 +1,17 @@
+{% extends 'scheduler/base.html' %}
+
+{% block content %}
+
+<style>
+    body {
+        background-color: #5bc0eb;
+      }
+</style>
+
+  <div class="mt-4 p-5 text-white rounded">
+    <h1 class="display-4 d-flex justify-content-around">Request submitted!</h1>
+    <p class="lead d-flex justify-content-around">Confirm the request by accepting it in your email!</p>
+      <a class="btn btn-primary btn-lg bg-secondary d-flex justify-content-around" href="{%url 'scheduler:home' %}" role="button">Go back</a>
+    </p>
+  </div>
+{% endblock content %}
