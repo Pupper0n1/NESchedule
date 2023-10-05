@@ -276,7 +276,7 @@ def validated(request, id):
     managers = []
 
     for manager in Person.objects.filter(boutique=obj.boutique.id):
-        # managers.append(manager.email)
+        managers.append(manager.email)
 
     # EMAIL STUFF
     subject = f'{obj.person.f_name} is requesting an event!'
